@@ -97,6 +97,8 @@
 }
 
 \pagestyle{plain}
+\renewcommand{\familydefault}{\sfdefault}
+
 
 
 % -----------------------------------------------------------------------------
