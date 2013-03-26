@@ -172,12 +172,13 @@ before defining it.  An example is as follows:
 \begin{quote}
 \noindent
 \begin{tabular}{lcl}
-AES                 &:     & Advanced Encryption Standard            \\
-DES                 &:     & Data Encryption Standard                \\
-                    &\vdots&                                         \\
-${\mathcal H}( x )$ &:     & the Hamming weight of $x$               \\
-${\mathbb  F}_q$    &:     & a finite field with $q$ elements        \\
-$x_i$               &:     & the $i$-th bit of some bit-sequence $x$ \\
+VAD                 &:     & Voice Activity Detection                 \\
+VOIP                &:     & Voice Over IP\\
+%DES                 &:     & Data Encryption Standard                \\
+%                    &\vdots&                                         \\
+%${\mathcal H}( x )$ &:     & the Hamming weight of $x$               \\
+%${\mathbb  F}_q$    &:     & a finite field with $q$ elements        \\
+%$x_i$               &:     & the $i$-th bit of some bit-sequence $x$ \\
 \end{tabular}
 \end{quote}
 
@@ -188,13 +189,8 @@ $x_i$               &:     & the $i$-th bit of some bit-sequence $x$ \\
 {\bf An optional section, of at most $1$ page}
 \vspace{1cm} 
 
-\noindent
-It is common practice (although totally optional) to acknowledge any
-third-party advice, contribution or influence you have found useful
-during your work.  Examples include support from friends or family, 
-the input of your Supervisor, external organisations or persons who 
-have supplied resources of some kind (e.g., funding, advice or time),
-and so on.
+\noindent This thesis would not have been possible without the continual
+support of my supervisor Dr Rafal Bogacz.
 
 % =============================================================================
 
@@ -216,48 +212,136 @@ and so on.
 \chapter{Contextual Background}
 \label{chap:context}
 
-{\bf A compulsory chapter, of roughly $10$ pages}
-\vspace{1cm} 
+\vspace{1cm}
 
-\noindent
-This chapter is intended to describe the project context, and motivate
-the proposed aims and objectives.  Ideally, it is written at a fairly 
-high-level, and easily understood by a reader who is technically 
-competent but not an expert in the topic itself.
+The term voice activity detection (sometimes referred to as voice endpoint
+location\cite{Tuske}) refers to the algorithms used to distinguish frames of
+audio that contain speech from those that contain background
+noise\cite{ramirez}. The motivation for this project is that we found, based on
+personal experience, that existing VAD algorithms struggle to efficiently
+distinguish the noise commonly associated with personal computers (typing and
+mouse clicks) from speech.
 
-In short, the goal is to answer three questions for the reader.  First, 
-what is the project topic, or problem being investigated?  Second, why 
-is the topic important, or rather why should the reader care about it?  
-For example, why there is a need for this project (e.g., lack of similar 
-software or deficiency in existing software), who will benefit from the 
-project and in what way (e.g., end-users or software developers, or 
-researchers), what work does the project build on and why is the selected 
-approach important or interesting (e.g., fills a gap in literature, applies
-results from another field to a new problem).  Finally, what are the 
-central challenges involved and why are they significant? 
- 
-The chapter should conclude with a concise bullet point list that 
-summarises the aims and objectives.  For example:
+\section{Applications}
 
-\begin{quote}
-\noindent
-The high-level objective of this project is to reduce the performance 
-gap between hardware and software implementations of modular arithmetic.  
-More specifically, the concrete aims are:
+The two main applications of VAD systems are VOIP and Speech Recognition. These
+systems both deal with human voice coming in from microphone input, and are
+only concerned with what the people that are actually saying, rather than the
+entirety of any particular audio sequence. Given these constraints it seems
+natural to place a system which only passes through the parts of the audio that
+contain human speech.
+
+\subsection{Speech Recognition}
+
+Speech recognition systems are responsible for working out what is being said
+in a given sequence of audio. They must be robust to different speakers,
+environments, hesitation, stuttering and other human factors. It is often noted
+that these systems degrade rapidly in the presence of noise\cite{Moreno} given
+that increasingly with systems like Siri\texttrademark\cite{siri} (Apple's
+speech recognition system for iOS\texttrademark) we find that people are using
+systems that require accurate detection of what is being said in potentially
+noisy outdoor environments.
+
+Speech recognition systems can have their accuracy improved\cite{shin} by
+employing VAD systems, which are used to locate speech endpoints. The speech
+endpoints are then passed into the speech recognition system which then has to
+only search the places that the VAD system has flagged up for words, rather
+than the entire sequence of audio. If the VAD system is sufficiently sensitive
+it may also be able to accurately locate the pauses between words the user
+makes, allowing the speech recognition system to assume 1 or very few words
+will lie within each part of detected speech.
+
+There is a well known speech recognition benchmark suite called
+Aurora\cite{aurora}, over this benchmark suite it was found\cite{ramirez-2}
+that by improving the VAD used from the G.729 ITU-T\cite{itut} standard to a
+specialised detector that word accuracy (the number of words correctly
+recognized) jumped approximately 17\% in the best case.
+
+In the context of this project we believe that our detector may be able to
+improve speech recognition through improved voice activity detection, but it is
+not our primary goal, as we forsee fewer circumstances where a user is going to
+require speech recognition whilst interacting with their computer, than we see
+cases where VOIP calls are occurring at the same time as someone is interacting
+with the keyboard and mouse inputs.
+
+\clearpage
+\subsection{VOIP and Telephony}
+
+When used in a VOIP context VAD systems are typically designed such that they
+signal that frames detected as noise are not to be transmitted, preventing the
+person at the other end of the call from hearing the noise. Often this is a
+component in a system that also includes some noise filtering and compression
+the mumble\cite{mumble} system for example includes both an amplitude and
+signal-noise ratio based VAD, and then passes the output into the
+CELT\cite{celt} codec, here the VAD system silences any noise detected frames
+and CELT efficiently compresses the silence to ensure a bandwidth saving.
+
+VAD algorithms allow for large bandwidth savings during both analogue
+telephone calls and VOIP calls. The reason for this bandwidth saving is that in
+both dialogue (two people speaking) and monologue (one person speaking) much of
+the time of the call is occupied by silence. Specifically: 60\% of the time is
+occupied by neither person speaking\cite{shah} in a dialogue and 20\% of the
+time is occupied by neither person speaking in a monologue.
+
+In the case of a traditional analogue telephone call, the bandwidth saving is
+achieved by "Time Assigned Speech Interpolation" whereby a link can carry more
+calls by assigning resources only to those calls that currently have someone
+speaking on them, causing a significant saving when, for example, speech is
+only travelling in one direction (1 slot instead of 2) or allocating no slots
+to the call when neither party is speaking\cite{5016247}.
+
+With a VOIP call, a significant bandwidth saving is achieved by nature of the
+fact that if transmission were continuous, both parties would be transmitting
+at least 64,000 bits per second\cite{ciscovad}. If we assume that for most of
+the call only one person is speaking, and that our VAD is sufficiently good at
+distinguishing noise from human speech then we will find at least a 50\%
+bandwidth saving. Additionally if there are pauses in speech, the VAD will
+provide an even greater bandwidth saving.
+
+
+\section{Problem Definition}
+
+Seeing that both user experience can be improved, and that bandwidth savings
+can be achieved through the use of voice activity detection systems, the
+question is what can be done to improve these. The specific goal of this
+project is to build a voice activity detection system which is robust in the
+typical environment of a modern computer user. Whilst these environments do
+have a low background noise, they often contain very high amplitude noise
+impulses that are caused by the user typing on the keyboard, or interacting
+with the mouse.
+
+As is discussed in the implementation section of this project we show that
+these systems do not have a high detection accuracy when presented with these
+noise impulses. Our aim is to build a VAD system that does provide a high level
+of accuracy against this specific type of noise.
+
+We believe that the problem in modern systems exist because most VAD algorithms
+are designed for noisy background environments\cite{shin}, but they are not
+designed for short, loud noise impulses. These noise impulses are common when a
+user is typing on their keyboard. There are two modern consumer VOIP systems
+that we used and were found to detect keyboard noise or mouse noise as someone
+speaking. Those were: Mumble\cite{mumble}, a low latency system designed for
+gamers to communicate whilst playing with each other and
+Skype\texttrademark\cite{skype} a well known consumer VOIP solution designed
+for single or many person VOIP calls. Especially in the case of mumble it is
+essential that keyboard noise is filtered out, as gamers tend to be interacting
+with their keyboard continuously whilst playing videogames, possibly drowning
+out much of the real communication, or causing annoyance.
+
+The high-level objective of this project is to build a robust voice activity
+detector system that can accurately distinguish voice from keyboard and mouse
+noise with suitable performance for use in real time systems. More specifically
+the concrete aims are:
 
 \begin{enumerate}
-\item Research and survey literature on public-key cryptography and
-      identify the state of the art in exponentiation algorithms.
-\item Improve the state of the art algorithm so that it can be used
-      in an effective and flexible way on constrained devices.
-\item Implement a framework for describing exponentiation algorithms
-      and populate it with suitable examples from the literature on 
-      an ARM7 platform.
-\item Use the framework to perform a study of algorithm performance
-      in terms of time and space, and show the proposed improvements
-      are worthwhile.
+    \item Survey existing VAD systems for accuracy against our dataset
+    \item Work to develop own algorithm based on machine learning techniques,
+          using common features from literature
+    \item Build a hangover system which smooths transition from voice to 
+          non-voice classes
 \end{enumerate}
-\end{quote}
+
+
 
 % -----------------------------------------------------------------------------
 
@@ -268,17 +352,87 @@ More specifically, the concrete aims are:
 \vspace{1cm} 
 
 \noindent
-This chapter is intended to describe the technical basis on which execution
-of the project depends.  The goal is to provide a detailed explanation of
-the specific problem at hand, and any previous or related work in the area 
-(e.g., descriptions of supporting technologies, existing algorithms that 
-you use, alternative solutions proposed).  
 
-Put another way, after reading this chapter a non-expert reader should have 
-obtained enough background to understand what {\em you} have done, and then
-assess how novel, challenging and rigorous your work is.  You might view an 
-additional goal as giving the reader confidence that you are able to absorb 
-and understand research-level material.
+%\section {danpagematter}
+%This chapter is intended to describe the technical basis on which execution
+%of the project depends.  The goal is to provide a detailed explanation of
+%the specific problem at hand, and any previous or related work in the area 
+%(e.g., descriptions of supporting technologies, existing algorithms that 
+%you use, alternative solutions proposed).  
+%
+%Put another way, after reading this chapter a non-expert reader should have 
+%obtained enough background to understand what {\em you} have done, and then
+%assess how novel, challenging and rigorous your work is.  You might view an 
+%additional goal as giving the reader confidence that you are able to absorb 
+%and understand research-level material.
+
+\section {sammatter}
+
+The basic problem any voice activity detector is trying to solve is the
+question of whether or not a particular frame of audio does or does not contain
+voice. In nearly all recording environments there is continuous background
+noise and, when there is speech, the microphone picks up speaking on top of
+that. Thusly the output of a VAD system is a single bit (1 or 0 for voice or
+noise). In a VAD system we take input from the microphone and then attempt to
+determine which of two input classes we are in, corresponding to whether we
+should or should not transmit the audio further. We formulate this as a
+decision as follows:
+
+\[ decision = \left\{ \begin{array}{ll}
+            1 & \mbox{if input like $n + v$: speech present}\\
+    0 & \mbox{if input like $n$: no speech present}.\end{array} \right. \] 
+
+Where $n$ represents the presence of background noise and $v$ represents the
+presence of conversational speech. This is referred to as additive
+noise\cite{sohn} and generally represents a very realistic model of most
+environments in which human speech must be differentiated from background noise.
+
+In this project our problem space is slightly different, in that not only do we
+have to deal with background noise but we also have to deal with the fact that
+keyboard noise is picked up by microphones. This noise is in no way constant:
+whilst most people type with a rhythm there are distinct impulses and times
+when the amplitude from this noise is very low. In addition to this we may have
+to deal with the case where someone is typing and talking at the same time. This
+means that our decision model may look something like:
+
+\[ decision = \left\{ \begin{array}{ll}
+            1 & \mbox{if input like $n + k + v$: speech present}\\
+            0 & \mbox{if input like $n + k$: no speech present}\\
+    \end{array} \right. \]
+
+Where $k$ represents the keyboard noise component of the input. This problem is
+different as mentioned above, due to the highly non-static nature of keyboard
+noise. It is worth noting that this model is still entirely additive, this
+model is reasonable because the sources of noise should not destructively
+interfere with each other. It is, however, worth noting that the phenomenon of
+clipping, the decibel level of the sound sources the microphone can pick up
+adding to go above it's input limit, can occur and in this case the additive
+models may break down in section \ref{chap:evaluation} we investigate
+how important these effects are.
+
+
+
+\section{Existing Voice Activity Detection Techniques}
+
+
+Existing voice activity detection techniques fall into one of two categories.
+Either the algorithms contain a number of parameters, and each parameter is
+given a threshold (the noise/voice threshold). A decision is made based on the
+thresholds over all the parameters as to whether transmission should or should
+not occur. In these systems the thresholds can either be static or
+adaptive\cite{gokhun}, newer systems tend to deal with the idea that background
+noise may be non-stationary and will attempt to adapt their decision based on
+long term averages of frames that have been given either noise or voice
+classes.
+
+The other major class of voice activity detection algorithms extract parameters
+from short "windows"\cite{shin} of audio and then apply a machine learning
+algorithm
+
+
+\subsection{Commonly used features}
+
+One of the most commonly used features in voice activity detection is
 
 % -----------------------------------------------------------------------------
 
