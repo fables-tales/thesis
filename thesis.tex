@@ -366,11 +366,11 @@ the concrete aims are:
 %additional goal as giving the reader confidence that you are able to absorb 
 %and understand research-level material.
 
-\section {sammatter}
-
 The basic problem any voice activity detector is trying to solve is the
 question of whether or not a particular frame of audio does or does not contain
-voice. In nearly all recording environments there is continuous background
+speech.
+
+In nearly all recording environments there is continuous background
 noise and, when there is speech, the microphone picks up speaking on top of
 that. Thusly the output of a VAD system is a single bit (1 or 0 for voice or
 noise). In a VAD system we take input from the microphone and then attempt to
@@ -378,9 +378,13 @@ determine which of two input classes we are in, corresponding to whether we
 should or should not transmit the audio further. We formulate this as a
 decision as follows:
 
+\begin{figure}
 \[ decision = \left\{ \begin{array}{ll}
             1 & \mbox{if input like $n + v$: speech present}\\
-    0 & \mbox{if input like $n$: no speech present}.\end{array} \right. \] 
+    0 & \mbox{if input like $n$: no speech present}.\end{array} \right. \]
+            \label{eqn:decision 1}
+            \caption{Decision model for most voice activity detectors}
+        \end{figure}
 
 Where $n$ represents the presence of background noise and $v$ represents the
 presence of conversational speech. This is referred to as additive
@@ -395,10 +399,14 @@ when the amplitude from this noise is very low. In addition to this we may have
 to deal with the case where someone is typing and talking at the same time. This
 means that our decision model may look something like:
 
+\begin{figure}
 \[ decision = \left\{ \begin{array}{ll}
             1 & \mbox{if input like $n + k + v$: speech present}\\
             0 & \mbox{if input like $n + k$: no speech present}\\
     \end{array} \right. \]
+            \label{eqn:decision 1}
+            \caption{Decision model for our voice activity detector}
+\end{figure}
 
 Where $k$ represents the keyboard noise component of the input. This problem is
 different as mentioned above, due to the highly non-static nature of keyboard
@@ -407,32 +415,191 @@ model is reasonable because the sources of noise should not destructively
 interfere with each other. It is, however, worth noting that the phenomenon of
 clipping, the decibel level of the sound sources the microphone can pick up
 adding to go above it's input limit, can occur and in this case the additive
-models may break down in section \ref{chap:evaluation} we investigate
+models may break down in chapter \ref{chap:evaluation} we investigate
 how important these effects are.
 
+\section{Understanding voice}
 
+In particular there are two types of speech, voiced and unvoiced speech. The
+easiest way to demonstrate the difference between this is to place two fingers
+on your throat/lower chin and then make a "sssssssss" sound (unvoiced) followed
+by a "zzzzzzzzzzzz" sound (voiced). In the first example one cannot feel any
+vibration, however in the second example one feels ones throat vibrating.
+Voiced and unvoiced speech have somewhat different characteristics and this
+must be taking account of when building a VAD system.
+
+When speaking voice typically has it's fundamental frequency in the 75-150HZ
+range for men and the 150-300HZ range for women. However, the human voice when
+speaking also has a rich harmonic content meaning that there are a number of
+other frequency peaks. The voice band, the band used for transmission of speech
+lies in the 300HZ to 3400HZ range. Whilst this may seem that it would cut off
+the sound of voice. This is not the case as enough of the harmonics of speech
+still make it through, and the listener will get the impression that they are
+actually hearing the missing fundamental tone.
+
+The harmonics of the fundamental are integer multiples in frequency of the
+original note, demonstrated by figure \ref{img:harmonics}, we see that the
+first harmonic is the wave with a base frequency, the second is with twice that
+frequency and so on. Due to the complex physics of how our bodies force air through
+our throats we get a large frequency response not only at the fundamental notes
+of voice, but also at the first few harmonics of the fundamental.
+
+We can see that a section of voice features strong harmonics of the fundamental
+in figure \ref{img:spectrogram} a spectrogram, showing the frequency strength
+over time for a segment of speech. Specifically with the first word note the
+strong fundamental at 600HZ with strong harmonics at 1800HZ (3rd harmonic) and
+2400HZ (4th harmonic).
+
+\begin{figure}
+    \includegraphics[height=10cm]{harmonics.png}
+    \label{img:harmonics}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[height=10cm]{voder_spectrogram.jpg}
+    \label{img:spectrogram}
+\end{figure}
 
 \section{Existing Voice Activity Detection Techniques}
-
 
 Existing voice activity detection techniques fall into one of two categories.
 Either the algorithms contain a number of parameters, and each parameter is
 given a threshold (the noise/voice threshold). A decision is made based on the
 thresholds over all the parameters as to whether transmission should or should
-not occur. In these systems the thresholds can either be static or
-adaptive\cite{gokhun}, newer systems tend to deal with the idea that background
-noise may be non-stationary and will attempt to adapt their decision based on
-long term averages of frames that have been given either noise or voice
-classes.
+not occur. In some systems the thresholds are static with the thresholds
+determined experimentally over some training data\cite{haigh}. These systems,
+by their design have trouble dealing with background noise that changes such as
+computer fans spinning up/down, or a person using a mobile phone walking through
+streets with different activities happening in the background
 
-The other major class of voice activity detection algorithms extract parameters
-from short "windows"\cite{shin} of audio and then apply a machine learning
-algorithm
+In other threshold based voice activity detection systems the thresholds are
+adaptive\cite{gokhun}. These systems are designed to deal with non-stationary
+background noise, that is background noise that changes in amplitude and pitch.
+These systems usually start with an initial guess of their class thresholds
+which then change over time. The thresholds change based on the running average
+of each of the parameter values for the two classes, as output by the
+detector\cite{sakhnov}
+
+The other major class of voice activity detectors apply machine learning
+algorithms to build a complex classification boundary over the parameters of
+the model\cite{shin}. These classifiers do suffer from the problem of having a static
+decision boundary, due to the fact that on-line training is not possible
+without hand labelling. This, however, usually does not cause too much of an
+issue due to the fact that the more complex decision boundary achieves a much
+higher accuracy when trying to decide between the voice and non-voice class.
+
+\subsection {Features}
+
+In both threshold based and machine learning based VAD systems a number of
+features are extracted from the raw audio in order to give it a representation
+that is amenable to distinguishing frames of audio that contain background
+noise from those that contain speech. In this section we investigate existing
+features that are used in models for voice activity detection, including those
+that were and were not used in our model.
+
+\subsubsection{Commonly used features}
+
+When building our own classification system it is important to find the
+features that are already being used to build VAD systems, such that they can
+be used in our system, in combination with the classifier discussed in section
+TODO ADD A REFERENCE SRSLY. Whilst our problem is slightly different in that we
+have extremely non-stationary background noise, these features may be useful to
+build an accurate VAD system. This also serves as the explanation for when
+these features are referred to later on in this paper.
+
+One of the most commonly used features in voice activity detection is the
+energy of a frame. Given in figure \ref{eqn:energy} (sometimes also implemented
+as the root mean square of a window), this feature is used in
+\cite{shin}\cite{sakhnov}\cite{gokhun}\cite{haigh}\cite{atal} and \cite{sohn2}.
+The energy feature of a particular window of audio has been found to be
+significantly higher in frames that contain speech than background
+noise\cite{atal}. However, this parameter also forms different distributions
+for voice and unvoiced speech, with the energy value for voiced speech being
+significantly higher than that for unvoiced speech. In \cite{atal} they state "
+The energy of un-voiced sounds is usually lower than for voiced sounds, but
+often higher than for silence." The system they used was a threshold based one,
+however in \cite{shin} this feature was used as part of a decision tree system.
+They reported "The full band energy, the conventional feature for endpoint
+detection for clean speech, does not work well for noisy speech." The feature
+did, however, give roughly 88\% accuracy figure by itself when used in their
+classifier. This feature was used in our system for classification.
+
+\begin{figure}
+    $$Energy(x) = \sum_{i=0}^{length(x)}x(i)^2$$
+    \label{eqn:energy}
+    \caption{Energy of a window x, where length(x) gives the number of individual
+    samples in x}
+\end{figure}
+
+Another commonly used feature in voice activity detection is the zero crossing
+rate of a window. The definition for this feature is given in figure
+\ref{eqn:zero-crossing-rate}. This feature is not used in \cite{shin}, but is
+used in \cite{atal}. In \cite{atal} it is stated that zero crossing rate varies
+consistently with energy. This is very important for a classifier based system
+like the one that we are building because features that correlate with each
+other weakly are likely to give different statistical "views" on the data that
+machine learning algorithms can extract much of variance from in order to give
+a more accurate classification. In \cite{shin} they state that zero-crossing
+does not perform well in noisy speech, they did not use this parameter at all
+and did not make any actual reports on the accuracy of the feature. In
+\cite{haigh} they found that a detector based on energy and zero-crossing rate
+only failed in noisy conditions. This feature was also used in our detector.
+
+\begin{figure} $$ZeroCrossingRate(x) =
+    \sum_{i=1}^{length(x)}abs(sign(x(i-1))-sign(x(i)))$$ \label{eqn:zero-crossing-rate}
+    \caption{Energy of a window x, where length(x) gives the number of
+    individual samples in x, abs is the absolute value of a number, and sign
+gives the sign of the number 1, 0, or -1 for positive, zero or negative numbers
+respectively} \end{figure}
+
+\subsubsection{Other features from existing systems}
+
+There are anumber of other features that were used in the system we built that
+came from existing implementations of voice activity detection. We here explain
+these features so that the reader is aware of how the feature values are
+calculated.
+
+Another feature that is used in \cite{shin} is referred to as a "band energy".
+This simply takes the energy as specified in \ref{eqn:energy} but instead of
+computing it over the entire window, it is taken over the amplitude component
+of a fourier transform that has had a band pass applied to it, with the
+frequency band specified. For example the 300-3700HZ band energy that Shin et
+al refer to (which corresponds to the audible range of a telephone system) is
+computed by taking the sum of squared amplitudes of the components of the
+amplitude domain of a fourier transform that lie within the 300-3700HZ
+frequency range. In our system we used multiple band energies as discussed in
+chapter \ref{chap:execution}.
+
+In \cite{haigh} they used ceptral features for voice activity detection. There
+are multiple transforms that are referred to as the "cepstrum" of a signal,
+specifically the complex cepstrum, the power cepstrum and the phase
+cepstrum\cite{childers}. The power cepstrum is defined in
+\ref{eqn:power-cepstrum}. This feature is primarily used in speech recongition,
+the higher order task of determining what words are being said, rather than
+voice detection\cite{muda} and in \cite{atal} they criticize this approach for
+VAD, stating that this feature requires a very high degree of periodicity
+(singal approximately repeats itself with a fixed period) to provided an
+accurate classification.
+
+\begin{figure}
+    $PowerCepstrum(f)=\mathcal{F}^{-1}\{\mbox{log}(\mathcal{F}\{ f(t) \}|^2)\}|^2$
+    \caption{Definition of a power cepstrum. $f$ is our
+    signal function, $\mathcal{F}$ is the fourier transform function. $|a|$}
+    \label{eqn:power-cepstrum}
+
+\end{figure}
 
 
-\subsection{Commonly used features}
+Specifically in \cite{haigh} they use a cepstral distance measure defined as
+the euclidian distance of the power cepstrums between the data they were
+attempting to classify and a pre-defined 'code-book' of samples, selecting the
+class of whichever example in the 'code-book' had the lowest euclidian
+distance. This is equivalent to a single nearest neighbor classification. An
+accuracy figure is not given however they were able to design the threshold of
+their system such that it tripped at a very low voice likelyhood ratio with
+relatively low error(0.01).
 
-One of the most commonly used features in voice activity detection is
+Another feature that shows up 
 
 % -----------------------------------------------------------------------------
 
