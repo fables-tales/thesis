@@ -418,6 +418,15 @@ adding to go above it's input limit, can occur and in this case the additive
 models may break down in chapter \ref{chap:evaluation} we investigate
 how important these effects are.
 
+Nearly every existing voice activity detector makes the assumption that
+background noise is continuous, if irregular in volume and frequency, and
+attempts to distinguish voice from the background noise. More commonly than not
+we have found that these detectors merely identify any sound that is not part
+of the continuous background noise, giving real scope to our project.
+Specifically identifying sudden impulses of sound from the background, and
+determining whether or not they are someone speaking or someone typing is the
+main aim of our system.
+
 \section{Understanding voice}
 
 In particular there are two types of speech, voiced and unvoiced speech. The
@@ -589,17 +598,297 @@ accurate classification.
 
 \end{figure}
 
-
 Specifically in \cite{haigh} they use a cepstral distance measure defined as
 the euclidian distance of the power cepstrums between the data they were
 attempting to classify and a pre-defined 'code-book' of samples, selecting the
 class of whichever example in the 'code-book' had the lowest euclidian
 distance. This is equivalent to a single nearest neighbor classification. An
 accuracy figure is not given however they were able to design the threshold of
-their system such that it tripped at a very low voice likelyhood ratio with
-relatively low error(0.01).
+their system such that it tripped at a very low voice likelyhood ratio (0.01) with
+relatively low error.
 
-Another feature that shows up 
+In \cite{moattar} one of the key features that they extracted was the dominant
+frequency component of the signal. This corresponds to the highest peak in the
+fourier transform of the signal and is defined in \ref{eqn:dom-freq}. The
+authors of the paper observed that this feature was helpful in discriminating
+speech and silence frames. We observed problems with this feature due to the
+nature of our windowing system which are discussed in \ref{chap:execution}. The
+accuracy of this feature is reported in \cite{moattar} to have a greater than
+80\% accuracy under even noisy conditions. However the caveat to this feature
+for our project does apply that our noise is highly irregular and most
+definitely not of stationary amplitude.
+
+\begin{figure}
+    $DominantComponent(f) = argmax_i(|\mathcal{F}(f(t))|)$
+    \caption{Definition of the dominant component of a signal. $f$ is the singal
+        function, $\mathcal{F}$ is the fourier transform. $argmax$ gives us the
+        input corresponding to the maximum output of a function.}
+    \label{eqn:dom-freq}
+\end{figure}
+
+In \cite{atal} they used two features constructed via a linear predictive
+coding (LPC) analysis. The basic principle of linear predictive coding is that
+the current sample can be approximated as a linear combination of the previous
+samples\cite{rabiner}, the coding is the coefficients ($a_1,a_2,...,a_p$) that
+each of the previous samples are combined with to give the prediction of the
+coding. In \cite{atal} they specifically used a size 12 linear combination,
+which means that each sample was predicted as a linear combination of the
+previous twelve. It is important to note here that over short periods of
+10-30ms voice signals are roughly periodic, and that it is obvious that $s(n)
+\approx s(n-N_p)$ where $N_p$ is the length of the period. LPC techniques work
+with window sizes that are significantly smaller than the period and still
+accurately reconstruct the next part of the signal. The result of the LPC is a
+number of coefficients that can be used to attempt to reconstruct parts of the
+signal, however, they can also be used as parameters to both threshold and
+classifier based systems. In \cite{atal} they used two parameters from the LPC:
+
+\begin{itemize}
+
+    \item The first coefficient of a 12 coefficient LPC analysis: this is the
+        primary coefficient $a_1$ of the LPC analysis, corresponding to the
+        sample nearest to the sample we are trying to predict.
+
+    \item The energy of the error in the prediction made by the LPC. This is
+        essentially defined as the error signal (computed by subtracting the
+        signal predicted by the LPC and the actual signal). Energy is defined
+        above as the sum of the squares of the signal in \ref{eqn:energy}. In
+        the paper they state that this feature is equivalent to the ratio of
+        the geometric mean of the spectrum to the arithmetic mean of the
+        spectrum.  This makes it equivalent to the spectral flatness measure
+        defined in \cite{moattar}
+
+\end{itemize}
+
+\section{Machine learning techniques}
+
+In this project we decided to use machine learning techniques to build our VAD
+system. This is primarily due to the fact that threshold based approaches
+report lower accuracy rates in the literature and are very much designed to
+differentiate continuous background noise from sudden changes in any of their
+parameters. Our feeling was that this would not be amenable to differentiating
+sudden keyboard impulses from sudden voice impulses. In the execution chapter
+of this project we discuss how we built the training set and how we built the
+training set for this system, and this section specifically conducts a review
+of machine learning systems, with an explanation of state of the art machine
+learning techniques such as random forests, gradient boosted regression trees
+and adaboost with decision stumps. All classifiers here are discussed under the
+assumption that they only have to deal with a binary classification problem,
+which corresponds to the classification problem that we are dealing with
+(voice/non-voice classification).
+
+\begin{figure}
+    $Train:R^x \times R^y, \{0,1\}^y \rightarrow ModelFunction$
+
+    \caption{Definition of a training function: x is the number of features and
+        y is the number of classes. The function takes an x by y matrix of
+        reals and a y-length vector of labels and ouptuts a model function that
+        behaves as a classification function defined in in
+    \ref{eqn:define-classify} }
+
+    \label{eqn:define-train}
+\end{figure}
+
+\begin{figure}
+    $Classify: R^x \rightarrow \{0,1\}$
+    \caption{Definition of a trained model/classification function: x is the
+        number of features, the model takes a feature vector and outputs a class,
+    in some implementations this may be a probability}
+    \label{eqn:define-classify}
+\end{figure}
+
+\subsection{Classification and regression trees}
+
+Classification and regression trees are class of machine learning algorithm
+that work by first training a binary decision tree and then pushing examples to
+be classified through the binary decision tree to perform
+classification/regression. Training is performed by computing splits in the
+feature space that represent the maximum gain in information over the entire
+set of features for the examples that will reach this part of the tree. At the
+start the split that gives highest information gain over the entire data set is
+chosen, giving us two subsets of the entire data set, that are then split
+seperately from each other and so on and so on. This process continues until
+the leaf nodes of the tree contain only training examples of the same class. By
+this method we ensure that all training examples will be classified correctly,
+in general this method can lead to some overfitting that will cause the classifier
+to not generalise as well, and the trees are pruned. An example decision tree
+is shown in Figure \ref{fig:decision-tree}.
+
+\begin{figure}
+
+    \includegraphics[height=10cm]{decision_tree.png}
+
+    \label{fig:decision-tree}
+    \caption{An example decision tree kindly provided by Wikipedia}
+\end{figure}
+
+Regression trees are used when the output is not a single class but instead
+some single real number. For example a regression tree might be used in an
+attempt to predict the length of a patients stay in hospital. In \cite{shin}
+individual features were passed through a speech/non-speech classification, and
+then a CART (classification and regression tree) was employed over the outputs
+of the pre-classifiers to come to the final decision. This approach gave a very
+high accuracy level under low and medium noise levels (-5 and 0db respectively)
+but degraded under high noise levels (5db). In order to improve the
+classification parmeters were passed in from more than one window (specifically
+the previous and next window were passed in before the decision was made).
+
+\subsection{Decision Stump}
+
+Whilst never used on its own the decision stump classifier is worth exploring
+due to it's use in ensemble\footnote{Ensemble classification methods are a
+    large class of classification algorithm that combine many classifiers in an
+    attempt to improve classification accuracy or generalizability or both. In
+chapter \ref{chap:evaluation} we show that these methods give much better
+accuracy in cross validation than non-ensemble techniques over our data set
+with some intuition for why this is the case.} classification methods.
+Specifically the decision stump classifier acts like a normal binary decision
+tree classifier or CART but instead of training until completion it is trained
+for only one split. These often acheive very low classifcation accuracy
+(usually just barely better than a random classifier) and are sometimes
+referred to as "weak" or "base" classifiers. In the famous Viola Jones face
+detector\cite{viola} many decision stumps were used to form a strong classifier
+that achieves very good classification accuracy. An example decision stump is
+shown in Figure \ref{fig:decision-stump}.
+
+\begin{figure}
+
+    \includegraphics[width=5cm]{decision_stump.png}
+
+    \label{fig:decision-stump}
+    \caption{An example decision stump kindly provided by Wikipedia}
+\end{figure}
+
+\subsection{Adaboost}
+
+Adaboost is a well known algorithm for ensemble classification that achieves
+a high classification accuracy by training many classifiers. Unlike some of
+the other ensemble methods we discuss in this paper the Adaboost method can
+be used with any base classifier, and as such may be amenable to a larger set
+of problems than other ensemble methods presented here. Specifically the result
+of the Adaboost training is a chain of classifiers which become increasingly
+biased towards the most difficult samples to accurately classify within the
+training set.
+
+The final classification output of the Adaboost algorithm is given as a linear
+combination of weights multiplied by the classification output (usually a
+posterior probability) of each of the individual classifiers within the Adaboost
+classifier. The pseudocode for training the system is given in \ref{pseudo:adaboost}.
+
+Within this paper we use an Adaboost algorithm that uses decision stumps as its
+base classifier, this decision was made based on the fact that we wanted
+training to complete quickly (decision stumps train in effectively no time) and
+that this approach has been shown to work well in other problem
+domains\cite{viola}.
+
+It is worth noting that training an Adaboost classifier with a very large
+number of weak classifiers can cause a high level of overfitting, especially
+in the presence of noise within the data set.
+
+\begin{figure}
+    Psuedocode for training an adaboost classification system. It is important
+    to note that the weak classifiers must be sensitive to the weights given in
+    the $w$ array. If the classification system that is used is not sensitive
+    to these weights (for example a decision tree by default has no concept of
+    weighting it's inputs) we can weight the samples by performing a roulette
+    wheel selection\footnotemark on the samples.
+
+    \vspace{3em}
+
+    \begin{enumerate}
+
+        \item let $w_1(i)=\frac{1}{N_{samples}}$ for all $i$ in
+            $0,1,...,N_{samples}$.
+
+        \item for i = 0 to number of classifiers in ensemble (n)
+            \begin{enumerate}
+
+                \item Train a weak classifier that returns -1 or 1 given a
+                    sample.
+                \item Choose $\alpha_i \in R$.
+                \item Update $w(i) = w(i)exp(-\alpha y_i h_t(x_i))$ for all $i$ in
+            $0,1,...,N_{samples}$.
+            \item Normalize $w(i)$ so that it sums to 1 (forms a probability distribution).
+
+            \end{enumerate}
+        \item output strong classifier: $$H(x) = sign\left(\sum_{i=0}^{n}\alpha_i h_i(x)\right)$$
+    \end{enumerate}
+
+    \vspace{3em}
+
+    In step 2a in the previous listing we specifically pick the weak classifier
+    that gives the lowest weighted prediction error over all the samples, where
+    the weighted prediction error is defined as: $$error_{h_i} =
+    \sum_{k=0}^{N_{samples}} w(k)(y_k\neq h_i(x_k))$$. By doing this at each
+    stage we are effectively picking the weak classifier that is most capable
+    of dealing with the most highly weighted samples. This gives us an improved
+    classification over a single classifier because the difficult samples are
+    given "specialist" classifiers that are more capable of dealing with them
+    than a classifier trained over the entire set.
+
+    In step 2b we specifically chose $\alpha_i$ to greedily minimize
+    classification error at each step, that is at every step the overall
+    classification error on the training set will go down rather than up.
+
+    \label{pseudo:adaboost}
+    \caption{Adaboost training psuedocode and explanation}
+
+\end{figure}
+\footnotetext{Roulette wheel selection is an algorithm which
+        allows us to select randomly from a weighted array. If the array forms
+        a probability distribution (that is that it sums to 1) then we can
+        generate a number uniformly at random and move through the array of
+        weights, subtracting each weight from the generated number, when the
+        number reaches zero we have arrived at the item that corresponds to the
+    randomly generated number, and we can output it. When performing this
+selection multiple times we end up with a distribution of selections from the
+array that matches the weights of the items.}
+\subsection{Random Forest}
+
+The random forest classification algorithm is a modern ensemble method for
+classification proposed by Breiman in \cite{breiman}. In a random forest many
+decision trees are combined to give a much better classification result than
+any single classifier is able to. In order to arrive at a final class the
+original Breiman paper suggested that each classifier's output is taken and the
+modal class is used. In the implementation that we use in this paper we instead
+ask each tree to give a probability value that the instance is in the positive
+(voice) class and then take the mean average of these, thresholding at 0.5 to
+give the voiced/unvoiced classification. This helps to more accurately reflect
+that some trees may be very confident with an instance and give a high
+posterior probability but some may be less confident and give a probability
+closer to 0.5, the mean of these allows the end result of the classification to
+be more sensitive to the results of the individual trees.
+
+The training method for a randomised forest as described in \cite{breiman} is
+to create a randomised vector from the training set by performing selection
+without replacement at random from the training set, such that any single
+instance may occur more than once, this is the same technique that is used in
+the bagging ensemble classification method. The difference between how this
+system is trained, and how bagging trains is that instead of then just training
+decision trees in the traditional way, the random forest approach builds splits
+in each tree by selecting random subsets of the possible features at each of
+the splits.
+
+There is a second class of random forest used in this paper called extremely
+randomised trees. This method goes one step further in the randomness during
+training and instead of splitting on the most discriminative threshold of the
+most discriminative feature of a random subset of the features at each training
+stage the extremely randomised forest picks random thresholds of each feature
+in the random subset of features and then picks the one with the highest information
+gain.
+
+In \ref{fig:comparison} we can see a comparison of decision trees, random forests,
+extremely randomised trees and Adaboost. It is worth noting that the decision
+boundaries for random forests are a lot noisier around noisy data than the
+other classification algorithms.
+
+\begin{figure} \label{fig:comparison}
+    \includegraphics[width=13cm]{classifier_comparison.png} \caption{Comparison
+        of decision trees and some ensemble classification techniques, showing
+        data points with circles and decision boundaries with background color,
+        shading in the background colour indicates probability where the
+        ensemble methods have internal classifiers that disagree. The decision
+        tree always has block color as it gives a single class as an output
+rather than a probability} \end{figure}
 
 % -----------------------------------------------------------------------------
 
