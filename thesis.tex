@@ -186,11 +186,27 @@ VOIP                &:     & Voice Over IP\\
 
 \chapter*{Acknowledgements}
 
-{\bf An optional section, of at most $1$ page}
-\vspace{1cm} 
+\vspace{1cm}
 
-\noindent This thesis would not have been possible without the continual
-support of my supervisor Dr Rafal Bogacz.
+This thesis would not have been possible without the continual support of my
+supervisor {\bf Dr Rafal Bogacz}, who has spent many hours with me this year giving
+me advice on how to organise the execution of this project, as well as ideas
+for how to make improvments when I was stuck.
+
+I would also like to thank:
+\begin{itemize}
+
+    \item My friend and mentor {\bf Dr Ben Fields}, who spent a couple of his
+        afternoons discussing my thesis with me, and also for sharing his
+        personal experience of writing 3 theses of his own.
+
+    \item My good friends {\bf James Laverack} and {\bf Luke Murray} with whom I spent a
+        huge amount of time unwinding when I felt burnt out.
+
+    \item My {\bf parents}, who provided me with a much needed supply of tea during
+        the long writeup of this thesis.
+
+\end{itemize}
 
 % =============================================================================
 
@@ -842,7 +858,9 @@ in the presence of noise within the data set.
     randomly generated number, and we can output it. When performing this
 selection multiple times we end up with a distribution of selections from the
 array that matches the weights of the items.}
+
 \subsection{Random Forest}
+\label{section:random-forest}
 
 The random forest classification algorithm is a modern ensemble method for
 classification proposed by Breiman in \cite{breiman}. In a random forest many
@@ -890,6 +908,41 @@ other classification algorithms.
         tree always has block color as it gives a single class as an output
 rather than a probability} \end{figure}
 
+\subsection{Gradient Boosted Regression Trees}
+
+The gradient boosted regression trees algorithm uses boosting to build a strong
+classifier by combining many decision trees over the input training samples.
+Like Adaboost the GBRT (Gradient Boosted Regression Trees) model takes the
+output of the overall classifier as the sum of each of the outputs of the
+individual classifiers in the ensemble multiplied by a weight. The difference
+between this technique and Adaboost is that instead of weighting samples that
+are classified incorrectly, each internal classifier is trained with the
+individual examples labelled with the residual between the actual label and
+what the current version of the classifier gives.
+
+The main disadvantage of GBRT in comparison to the Random Forest technique is
+that the training process cannot be easily parallelized, due to the fact that
+each new tree must be trained as a function of the ensemble classifier as it
+has been trained thus far.
+
+In \cite{parker} they use GBRT to perform sequence alignment of music, this
+technique was also used by the winning submission to the netflix prize.
+
+\subsection{A review of ensemble techniques}
+
+The ensemble techniques that we have discussed sofar all have been shown to
+perform significantly better in generic machine learning applications than
+single classifiers this is because they build a number of different models in
+various ways, each of which has either a randomised component, or is reliant on
+moving against the error of other models within the ensemble. These techniques,
+do, however come with a high performance overhead, due to the fact that there
+are many classifiers instead of one. Adaboost with decision stumps does
+somewhat serve as an exception to this rule because decision stumps take
+virtually no time to perform a classification. In this paper we consider
+decision trees, random forests, gradient boosted regression trees and Adaboost,
+comparing the feature set that we developed in an attempt to maximise accuracy
+and generalizability.
+
 % -----------------------------------------------------------------------------
 
 \chapter{Project Execution}
@@ -898,97 +951,181 @@ rather than a probability} \end{figure}
 {\bf A topic-specific chapter, of roughly $20$ pages} 
 \vspace{1cm} 
 
-\noindent
-This chapter is intended to describe what you did: the goal is to explain
-the main activity or activities, of any type, which constituted your work 
-during the project.  The content is highly topic-specific, but for many 
-projects it will make sense to split the chapter into two sections: one 
-will discuss the design of something (e.g., some hardware or an algorithm), 
-inc. any rationale or decisions made, and the other will discuss how this 
-design was realised via some form of implementation.  
+%\noindent
+%This chapter is intended to describe what you did: the goal is to explain
+%the main activity or activities, of any type, which constituted your work 
+%during the project.  The content is highly topic-specific, but for many 
+%projects it will make sense to split the chapter into two sections: one 
+%will discuss the design of something (e.g., some hardware or an algorithm), 
+%inc. any rationale or decisions made, and the other will discuss how this 
+%design was realised via some form of implementation.  
+%
+%This is, of course, far from ideal for {\em many} project topics.  Some
+%situations which clearly require a different approach include:
+%
+%\begin{itemize}
+%\item In a project where asymptotic analysis of some algorithm is the goal,
+%      there is no real ``design and implementation'' in a traditional sense
+%      even though the activity of analysis is clearly within the remit of
+%      this chapter.
+%\item In a project where analysis of some results is as major, or a more
+%      major goal than the implementation that produced them, it might be
+%      sensible to merge this chapter with the next one: the main activity 
+%      is such that discussion of the results cannot be viewed separately.
+%\end{itemize}
+%
+%\noindent
+%Note that evidence of ``best practice'' project management (e.g., use of 
+%version control, choice of programming language and  so on) should only 
+%be included if there is a clear reason to do so.
 
-This is, of course, far from ideal for {\em many} project topics.  Some
-situations which clearly require a different approach include:
+\section{Building the dataset}
 
-\begin{itemize}
-\item In a project where asymptotic analysis of some algorithm is the goal,
-      there is no real ``design and implementation'' in a traditional sense
-      even though the activity of analysis is clearly within the remit of
-      this chapter.
-\item In a project where analysis of some results is as major, or a more
-      major goal than the implementation that produced them, it might be
-      sensible to merge this chapter with the next one: the main activity 
-      is such that discussion of the results cannot be viewed separately.
-\end{itemize}
+One of the most important things for the classification based approach that we
+have decided to use in this project is to build a dataset that is
+representative of the problem domain, and to ensure that the dataset has a
+representation that is amenable to classification. In this section we will
+discuss our approach to constructing a dataset that allows us to achieve the
+aims outlined in this paper.
 
-\noindent
-Note that evidence of ``best practice'' project management (e.g., use of 
-version control, choice of programming language and  so on) should only 
-be included if there is a clear reason to do so.
+The first step in building the dataset was to record a reasonable amount of
+audio that can be used to build the classifier. In order to build our sample
+database we used the recording feature of the Mumble\cite{mumble} program,
+connected to the server for the Computer Gaming Society of the University of
+Bristol Students union. Due to the fact that there were multiple players during
+each session, we were able to capture separate recording channels for each
+player in the game. In total this database amounts to 24 hours of audio,
+although not all of this audio was used in the overall classification system.
+The audio captured was of extremely high quality at 48KHz with 24 bit samples.
+This was compressed down to 16 bit samples at 48KHz for use in this project due
+to the large memory requirements of pulling the entire set into memory. 
 
-\section{Example Section}
+It is worth noting at this point that while there are existing datasets such as
+the Buckeye corpus\cite{buckeye}, none of them contain noise that comes from
+keyboard and mouse inputs, which is the critical target of our project. It is
+also worth noting that due to the large number of people that were involved
+with the recording we get a large number of different microphone/keyboard/mouse
+configurations to build a classifier that is robust to these different
+configurations. Additionally it is worth noting that there is a minor gender
+imbalance in this dataset, with 10 males and only 1 female in the data set.
+Whilst this may cause the classifier to generalise less well, the data set was
+recorded from the best available source at the time.
 
-This is an example section; 
-the following content is auto-generated dummy text.
-\lipsum
+Once the audio had been recorded the task of labelling presented itself.
+Initially this labelling was performed by opening the audio in the audio editor
+Audacity\cite{audacity} and then selecting regions of audio and playing them
+back, this approach had the advantage of allowing relatively large, continuous
+regions to be labelled quickly, but it was a very slow process when there were
+short regions where people would utter short words and then return to the
+silence/typing class. In order to speed this process up a simple python script
+was written with a very simple class detector. In order to make a best guess
+the script ran on 200ms windows of audio, detecting whether the sum of the
+absolute value of each of the frames was above some very low threshold, if the
+sum of the current frame was the same side of the threshold as the previous
+frame then they were joined together, this meant that the smallest audio frame
+that the user had to label was 200ms, and the longest would be when there was
+contiguous speech, which based on labelling experience was around 4 seconds. An
+example waveform with a contiguous region of 2.6 seconds, followed by a 200ms
+region of shortest change is given in figure \ref{img:labelling_example}. This
+allowed for background noise to be separated from both sharp keyboard impulses
+and people speaking, it then interactively asked the user to label the audio by
+hand. In addition to this windows of total silence were simply given a
+homogeneous background noise label (due to the fact that frames with 0
+amplitude clearly do not represent someone speaking). The labelled data was
+stored in an sqlite database, with the start time, end time, original file name
+and the class label. It is worth noting that whilst this approach allowed for
+quick labelling there were times where the same class was given to a large
+range of audio which was primarily in one class, with a very short tail of the
+other class at the end. We feel that this problem did not skew the
+classification results too much, due to the very high classification accuracy
+that we were able to build.
 
-\subsection{Example Sub-section}
+It is worth noting that due to the fact that we stored the data and the class
+information separately we are able to apply transformations to the raw audio
+data without affecting the accuracy of the labelling. This was useful when we
+started performing experiments such as changes in bits per sample and frame
+rate which have some important effect on classification accuracy. It is also
+worth noting that we did not end up labelling all 24 hours of audio that was
+available: this would taken an incomprehensibly large amount of time and we
+felt that we could still build a valid proof of concept classification system
+with the data that was available to us, specifically we have just over an hour
+of labelled audio, split amongst all but one of our speakers (one of the
+males). The distribution of labelled data amongst the various participants can
+be seen in figure \ref{img:speaker_distribution}. The dominant speaker, speaker
+7 was taken from the recorder's configuration, the most data is available
+because the recorder was always present in any of the recording sessions,
+whereas other users were not. Speaker 3 is the female speaker and forms a
+representative part of the dataset.
 
-\begin{figure}[t]
-\centering
-foo
-\caption{This is an example figure.}
-\label{fig}
+\begin{figure}
+    \includegraphics[height=10cm]{speaker.png}
+    \label{img:speaker_distribution}
+    \caption{Distribution of speakers in the labelled dataset}
 \end{figure}
 
-\begin{table}[t]
-\centering
-\begin{tabular}{|cc|c|}
-\hline
-foo      & bar      & baz      \\
-\hline
-$0     $ & $0     $ & $0     $ \\
-$1     $ & $1     $ & $1     $ \\
-$\vdots$ & $\vdots$ & $\vdots$ \\
-$9     $ & $9     $ & $9     $ \\
-\hline
-\end{tabular}
-\caption{This is an example table.}
-\label{tab}
-\end{table}
+\begin{figure}
+    \includegraphics[width=8cm]{labelling1.png}
+    \includegraphics[width=8cm]{labelling2.png}
+    \label{img:labelling_example}
+    \caption{Example of contiguous and short region in simple labelling system}
+\end{figure}
 
-\begin{algorithm}[t]
-\For{$i=0$ {\bf upto} $n$}{
-  $t_i \leftarrow 0$\;
-}
-\caption{This is an example algorithm.}
-\label{alg}
-\end{algorithm}
+\section{Building the classifier}
 
-\begin{lstlisting}[float={t},caption={This is an example listing.},label={lst},language=C]
-for( i = 0; i < n; i++ ) {
-  t[ i ] = 0;
-}
-\end{lstlisting}
+From the start we used the Random Forest classifier discussed in section
+\ref{section:random-forest}, this is due to both familiarity, and availability.
+Specifically we took an off the shelf implementation from the
+scikit-learn\cite{sklearn} Python library. This library was chosen due to it's
+general popularity and the author's familiarity with python. Once the
+classifier had been chosen we decided to act on windows of 16ms, this number
+was chosen because it is used in gaming applications as the target framerate of
+any on screen graphics, corresponding to 60 frames per second, which most
+players perceive to be acting in real time. The background research indicates
+that this frame size is not outside the desired range of 10-30ms, it is worth
+however noting that the Shin\cite{shin} system uses a slightly shorter, 10ms
+window size.
 
-This is an example sub-section;
-the following content is auto-generated dummy text.
-Notice the examples in Figure~\ref{fig}, Table~\ref{tab}, Algorithm~\ref{alg}
-and Listing~\ref{lst}.
-\lipsum
+In this section, classification accuracies are reported as the result of a 10
+fold, randomised, stratified cross validation (there was a minor imbalance in
+the number of samples in each of the classes, with roughly 53\% background
+noise and 47\% voice). The folds were trained with 66\% of the data in the
+training set, we felt that this split gives a reasonable tradeoff between
+giving the classifier sufficient data to train on, and not training in such a
+way that the classifier would be overly biased towards the dataset, in other
+words we are trying to retain some of the generalizability of our classifier by
+using a 66\% training set rather than a 90\% training set.
 
-\subsubsection{Example Sub-sub-section}
+The general binary classification problem that we formulated in the technical
+background chapter of this paper requires that we have some fixed size vector
+of real numbers for each sample in the training/test sets, obviously this means
+that we cannot pass some arbitrary length audio stream into the classifier and
+attempt to build a result, so the natural thing to do is to apply a "windowing"
+to the audio. Specifically: we must pick a fixed window size that is short
+enough that it will not be perceived as lagging whilst classification is
+occurring, short enough that we can classify it in real time (if our window
+contains 1 million samples it is unlikely that we can classify it in real
+time), and long enough that it contains enough information so that it can be
+classified.
 
-This is an example sub-sub-section;
-the following content is auto-generated dummy text.
-\lipsum
+We initially chose a 16ms window size as the size of the window for
+classification, this falls within the common window sizes in the background
+literature, which typically fall in the 10ms-30ms, and our specific choice of
+16ms was made because this is the traditional framerate that many gaming
+applications target, representing 60 frames a second, traditionally perceived
+as smooth by most gamers. In chapter \ref{chap:evaluation} we assess the
+relative merits of window sizes in the 10-30ms range, and the affects those
+have on classification accuracy. Our initial choice of 16ms, with the 48000Hz
+audio that we use gives us 768 samples per window. Initially we decided to pass
+all 768 samples as a vector as the representation of the window for
+classification.
 
-\paragraph{Example paragraph.}
-
-This is an example paragraph; note the trailing full-stop in the title,
-which is common style intended to ensure it does not run into the text.
-
-% -----------------------------------------------------------------------------
+The classifier with 768 samples gave a relatively unsatisfying classification
+accuracy (blah). It was obvious that the raw samples were not amenable to
+classification due to the position of individual windows having very little
+with the actual audio that was happening, and more importantly each frame
+within the 16ms window basically took every value regardless of class, so we
+began to implement features from the background research to begin to improve
+classification accuracy.
 
 \chapter{Critical Evaluation}
 \label{chap:evaluation}
