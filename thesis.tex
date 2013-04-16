@@ -1127,35 +1127,171 @@ within the 16ms window basically took every value regardless of class, so we
 began to implement features from the background research to begin to improve
 classification accuracy.
 
+In order to allow easy construction of a representation of the audio that would
+allow for a high classification accuracy, we added another stage to the
+pipeline that sat between the audio on the hard drive and the classifier.
+Specifically the pipeline had these stages:
+
+\begin{itemize}
+
+    \item For reach row of the database, extract class label, start time, end time
+        and file name
+
+    \item For each of those, open the file for reading and read samples out of
+        the file between the start time and the end time
+
+    \item Cut the sample into 16ms windows, appending 0s if necessary.
+
+    \item Apply all feature transforms to get a uniform width vector of integers
+
+    \item Send feature vectors along with class labels into the classifier for
+        training.
+
+\end{itemize}
+
+This allowed us to mix feature transformations as the project went on, removing
+and adding as necessary. The features that were implemented were:
+
+\begin{itemize}
+    \item Energy: the sum of squares of the frame, referred to in the technical
+        background chapter.
+
+    \item Zero crossing rate: the number of times the samples in the frame
+        change in sign, referred to in the technical background chapter.
+
+    \item The energy of the 3500 to 4300Hz frequency band: implemented as a
+        squared sum of the fourier magnitude domain of the values in this
+        frequency band. This feature was implemented due to it corresponding to
+        a peak in the average fourier transform of one of the classes
+
+    \item The energy of the 5400 to 6800Hz frequency band: implemented as above,
+        This feature was implemented due to it corresponding to a peak in the
+        average fourier transform of one of the classes.
+
+    \item The energy of the 1800 to 2700Hz frequency band: this corresponds to
+        the most dominant frequencies of voice according to the research
+
+\end{itemize}
+
+These frequency bands are shown along with the complete fourier amplitude domain
+in \ref{fig:frequencies}
+
+\begin{figure}
+    \label{fig:frequencies}
+    \includegraphics[height=10cm]{frequencies.png}
+    \caption{Histogram of fourier domain for voice and noise classes, voice
+    at the top, and noise at the bottom, with the frequency bands highlighted}
+\end{figure}
+
 \chapter{Critical Evaluation}
 \label{chap:evaluation}
 
 {\bf A topic-specific chapter, of roughly $10$ pages} 
 \vspace{1cm} 
 
-\noindent
-This chapter is intended to evaluate what you did.  The content is highly 
-topic-specific, but for many projects will have flavours of the following:
+In this chapter we have given the results of a number of experiments that were
+performed over our classifier built in the previous chapter, with regards to
+various facets such as classification accuracy, performance and
+generalizability.
+
+\section{Sample Bits}
+
+In the technical background chapter we explained how each sample of audio is
+represented by a number of bits, more bits giving much higher fidelity audio
+recreation. We started with 16 bit audio samples, and in this experiment we
+investigate the affect of changing to 8 bits per sample instead. There are a
+number of compelling reasons to make this change:
 
 \begin{enumerate}
-\item functional testing, inc. analysis of failure cases,
-\item performance results, and analysis of said results that draw some 
-      form of conclusion,
-      and
-\item evaluation of options and decisions within the project, and/or a
-      comparison with alternatives.
+
+    \item If the bits per sample can be reduced, the overall data rate going
+        through the system will be reduced, this may give performance benefits
+        such as being able to apply the feature transformations more quickly,
+        and fitting more data in the cache lines. Particularly as VAD systems
+        are used in embedded/mobile computing contexts, being able to work with
+        smaller data sets is important
+
+    \item Additionally it means that the data set that we use can be more
+        aggressively compressed for serving on the internet: we have built a
+        unique corpus that includes audio like laughter and keyboard noise
+        which were not found in the existing literature, and as such distributing
+        the data set more easily is a benefit
+
 \end{enumerate}
 
-\noindent
-This chapter often acts to differentiate project quality: even if the work
-completed is of a high technical quality, critical yet objective evaluation 
-and comparison of the outcomes is crucial.  In essence, the reader wants to
-learn something, so the worst examples amount to simple statements of fact 
-(e.g., ``graph X shows the result is Y''); the best examples are analytical 
-and exploratory (e.g., ``graph X shows the result is Y, which means Z; this 
-contradicts [1], which may be because I use a different assumption'').  As 
-such, both positive {\em and} negative outcomes are valid {\em if} presented 
-in a suitable manner.
+We obviously expect to see a reduced classification accuracy from cutting out
+the lower 8 bits of audio information, but it is worth noting that unlike
+music, voice tends to have a fairly uniform amplitude, and so the minor
+variations may not have that much of an effect.
+
+To perform this experiment, we modified the part of the program that reads the
+audio from the files, and instead of just passing out the entire audio sample
+we masked out the lower 8 bits of the 16 bit sample, to get an initial
+indication of how much of an affect removing these bits would have on the
+accuracy of the classification system. In order to perform testing, we trained
+our classifier system on 50\% of the data in the training set, testing against
+the over 50\% and plotted the roc curves which are shown in \ref{fig:roc-bitcrush}
+
+\begin{figure}
+    \includegraphics[height=10cm]{roc_8bit.png}
+    \caption{ROC curves of the two classifiers}
+    \label{fig:roc-bitcrush}
+\end{figure}
+
+This curve clearly shows that the accuracy of the two classifiers is nearly the
+same (98\% area under the ROC curve for the full bit samples, versus 97\% area
+under the ROC curve for 8 bit samples). This finding is useful, it means that
+the classifier can be trained on smaller data sets, reducing the overall size
+of the classification model that has to be loaded into memory: the full
+classifier takes 65 megabytes of memory, the reduced one takes only 40. This
+means that, for example, this system could be released on both PC and embedded
+contexts, with the slightly higher accuracy version being released on PC and
+the lower accuracy version released on the embedded/mobile devices. One of the
+main aims of this project is to release our corpus after we have completed, and
+it is important to note that reducing the size of the archive that we release
+will directly increase the number of people that it is available to. By halfing
+the bitrate (by reducing the number of bits per frame) we think this result is
+genuinely a good way to improve our ability to release the system, and improve
+performance.
+
+\section{Frame Rate}
+
+Changing the frame rate will naturally be expected to alter classifier accuracy
+and performance: firstly having to work with fewer frames will mean that the
+fourier transforms that we use are more sparse, and that we have to work over
+less data when computing features like the energy of the frame. This may also
+lead to a reduced classification accuracy. There is some reason to believe that
+this may not have as much impact as changing the bit rate of the classifier,
+this is due to the fact that human voice rarely goes above 4000Hz, with a
+nyquist limit of 8000Hz. Our audio samples being recoreded at 48000Hz means
+that we may have vastly much more information than we need. In order to test
+this we initially started by taking half (24000Hz) and quarter (12000Hz) frame
+rates, to determine whether or not this would have a significant affect on
+classification accuracy. The results are shown in \ref{fig:roc-frameratecrush}.
+
+%\noindent
+%This chapter is intended to evaluate what you did.  The content is highly 
+%topic-specific, but for many projects will have flavours of the following:
+%
+%\begin{enumerate}
+%\item functional testing, inc. analysis of failure cases,
+%\item performance results, and analysis of said results that draw some 
+%      form of conclusion,
+%      and
+%\item evaluation of options and decisions within the project, and/or a
+%      comparison with alternatives.
+%\end{enumerate}
+%
+%\noindent
+%This chapter often acts to differentiate project quality: even if the work
+%completed is of a high technical quality, critical yet objective evaluation 
+%and comparison of the outcomes is crucial.  In essence, the reader wants to
+%learn something, so the worst examples amount to simple statements of fact 
+%(e.g., ``graph X shows the result is Y''); the best examples are analytical 
+%and exploratory (e.g., ``graph X shows the result is Y, which means Z; this 
+%contradicts [1], which may be because I use a different assumption'').  As 
+%such, both positive {\em and} negative outcomes are valid {\em if} presented 
+%in a suitable manner.
 
 % -----------------------------------------------------------------------------
 
