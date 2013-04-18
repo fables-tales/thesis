@@ -16,6 +16,8 @@
 \usepackage{parskip}
 \usepackage{csvsimple}
 \usepackage{rotating}
+\widowpenalties 1 10000
+\raggedbottom
 
 
 \begin{document}
@@ -1303,7 +1305,7 @@ the classification accuracy come from the 3 higher frequency bands).
         lpc residual                               & 0.041 \\
         PSD peak at 21st component                 & 0.032 \\
         PSD dominant component after 3rd component & 0.017 \\
-        the third PSD component                    & 0.109 \\
+        sum of the first 4 (0-3) psd components    & 0.109 \\
         the sum of 30th-37th PSD components        & 0.038 \\
         zero crossings                             & 0.044  \\
     \hline
@@ -1481,6 +1483,24 @@ analysis to further reduce the dimensionality of the data. Specifically:
         in some signals (such as flat noise) there is very little variation
         needed to predict the next item from the previous 12.
 
+    \item 8 and 12 have a correlation of just over -0.5. These features
+        represent the 0th and 2nd components of the LPC. Again this is somewhat
+        expected because some signals will have little variation.
+
+    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components have a high
+        correlation.
+
+    \item 23 and 5 have a high level of correlation. This represents the sum of
+        the first 4 (0-3) PSD components and the energy of the overall 16ms
+        window. This can be somewhat explained by the fact that the dominant
+        frequency components in the power spectrum lie in these components and
+        as such will make up most of the energy of the frame. Whilst
+        intuitively this result makes sense, it is worth noting that the sum of
+        the 0-3 PSD band gives much more classification importance (see:
+        \ref{table:importances}) than the energy of the frame. As such it is
+        worth keeping both of these features, as it is trivial to compute the
+        energy (sum of squares) of the frame of audio.
+
     \item 6 and 25 have a correlation of -0.550. This is a relatively strong
         negative correlation. The kurtosis of the FFT and the zero crossing
         rate are somewhat inherently linked as the whole spectrum of the signal
@@ -1499,11 +1519,20 @@ analysis to further reduce the dimensionality of the data. Specifically:
         rate of sign change in the signal.
 \end{itemize}
 
+Here we have seen that only 9 pairs of features have correlations of above 0.5.
+This is a very encouraging finding as it indicates that the vast majority of
+our features present different "views" on the data and as such we have a
+representation of voice/keyboard noise/background noise that is very amenable
+to classification. Independence between features is very important for us to
+compute a good classification as if two features are highly correlated they do
+not provide as much useful information for classification as if the two features
+are highly uncorrelated.
+
 Checking these feature correlations during building the system was useful, if a
-new feature provided a low gain in either classifier importance or had high correlations
-with other features we could easily reject them. This way we were able to reject
-a number of features from our implementation. We have documented these below with
-reasons for their rejection.
+new feature provided a low gain in either classifier importance or had high
+correlations with other features we could easily reject them. This way we were
+able to reject a number of features from our implementation. We have documented
+these below with reasons for their rejection.
 
 \begin{itemize}
 
@@ -1540,13 +1569,28 @@ reasons for their rejection.
 
     \item After the features that have been described above were implemented in
         the system we investigated adding cepstral features into the system, we
-        did, however, find that the features from the cepstrum were already
-        accounted for in the rest of our features, and that they were
-        correlating highly with many of the other features in the classifier
-        without providing particularly high feature importances from the classifier, and
-        as such they were rejected.
+        found that the features from the cepstrum were already accounted for in
+        the rest of our features, and that they were correlating highly with
+        many of the other features in the classifier without providing
+        particularly high feature importances from the classifier, and as such
+        they were rejected.
 
     \end{itemize}
+
+It is worth noting that some of the features that we built did not come
+directly form the background research given in the technical background section
+of this document, but were instead based on tweaks from the features listed.
+For example the FFT Kurtosis metric that we used was inspired by the
+"peakyness" feature in \cite{shin}. Whilst this feature was not clearly
+documented as to how it was exactly calculated there are two metrics that could
+be used to compute the relative peakyness of a distribution. The first is the
+spectral flatness measure (flatness being the opposite of peakyness). This
+feature was computed on both the fourier spectrum and the power spectrum and
+was rejected from both because of it's very low classification accuracy. We
+ended up using the kurtosis metric because it measures peakedness relative to a
+normal distribution, for unimodal distributions.\cite{DeCarlo} Our
+distributions are definitely unimodal, they have a peak at the far low components
+of the spectrum (see \ref{fig:frequencies}).
 
 \section{Analysis of the features with respect to accuracy}
 
@@ -1569,6 +1613,7 @@ here are keyed the same as the mappings in \ref{fig:feature-keys}.
 
 \begin{figure}
     \begin{tabular}{|l|l|l|}
+        Feature ID & $1-MAE(Feature)$ & $STDEV(1-MAE(Feature))$ \\ \hline
         1 & 0.61125383971 & 0.00185529016944 \\ \hline
         2 & 0.576193800614 & 0.00441615026379 \\ \hline
         3 & 0.542711533091 & 0.00285376833334 \\ \hline
@@ -1617,6 +1662,323 @@ not have much better prediction accuracy than the baseline, they are all
 somewhat uncorrelated, meaning that they present different views on the data
 and as such allow the random forest classifier to extract nearly all of the
 variance from the data set and provide a much more accurate classification.
+
+Much of this section has been to do with demonstrating that the features that
+we have built for our implementation accurately help us solve the
+classification problem that we have: that is accurately discriminating
+background noise and typing from human speech. Based on the results reported
+here we are confident that this implementation is very much a working prototype
+of this system, and that some future work remains in ensuring that this system
+is robust to new speakers by building a much larger training set with a much
+more representative sample of speakers.
+
+\section{Classifier Performance}
+
+One of the most important things in our implementation is to ensure that the
+performance of the classifier is good enough for application in a voice activity
+detection system, additionally the amount of time taken to train the classifier
+is important. Certainly, the actual problem that this classifier is trying to
+solve is the question as to whether it should, or should not, further transmit
+audio to the rest of a VOIP or speech recognition system, and as such a certain
+amount of online training is possible by asking users to use the less advanced
+"push to talk" detection system.
+
+By using this system the users are effectively training the system as to which
+pieces of audio they do/do not wish to transmit. We believe that to extend this
+system to new users, this technique could certainly be employed with a real
+time labeller based on the status of the push to talk key and recording the
+audio that is currently going through the system, and in the Critical
+Evaluation section our robustness to unseen speakers is shown to be less than
+perfect, so some online training is very much desired.
+
+Due to these future plans, it is important to consider the performance of the
+classifier because if it is found to be lacking in either training or
+classification then some improvements must be made. There is also a performance
+concern with our implementation specifically because we used the
+Python\cite{python} programming language which is interpreted and not know for
+its high performance. In addition to this concern we are using the numpy and
+scipy libraries which are not compatible with a JIT implementation of Python,
+PYPY\cite{pypy}. The JIT implementation, obviously, runs somewhat faster than
+the implementation with no JIT.
+
+In this section we document some of the places where optimisations had to be
+made within the system that would otherwise have disabled this project from
+running quickly enough to have a realistic application in the VAD space. Some
+of the optimisations are only useful for use during training over a large
+database, this is due to the fact that they act on batches of instances (either
+arrays of samples or fourier transform results). Other optimisations are useful
+both during training and on-line classification, this is due to the fact that
+audio coming out of the audio hardware is buffered, and we can take advantage
+of there being multiple 16ms windows of audio in the buffer.
+
+\subsection{Bytes Per Frame}
+
+One of the initial bottlenecks in the implementation of our system was reading
+all the audio of the disk into a representation that could be used for
+processing and then applying processing to that in-memory data. Obviously
+reducing the size of the audio is a simple way to fix this problem, and we
+decided that dropping from 24bit to 16bit frames was a good way to fix this
+problem. Firstly this massively reduced the time to read the files off the disk
+(surprisingly by about a third!) and it also meant that the process of reading
+the audio into an array of numbers was faster. The reason for this is that
+routines for reading 16 bit integers from a packed binary format exist within
+the Python language, but routines for 24 bit integers do not. This meant that
+we had to pull them in as 32 bit integers and then decode them back into their
+24 bit format. This lead to much additional processing which, in a native
+programming language may not have been a problem. Whilst this is an obvious
+drawback of using a high level language like Python it gave some other
+advantages.
+
+One of the first advantages that it gave was that computing the fourier
+transform and power spectral densities of the audio happened much more quickly:
+when working with a non-trivial amount of data (approximately 24 hours) this
+makes an appreciable time saving (again approximately half the time, presumably
+because the integers are 16 bit instead of 32 bit).
+
+Another advantage that this gave was that the classifier was able to train more
+quickly, this is obvious when looking at the specifics of how our classifier
+implementation works: it splits all feature domains until they are fully split,
+so if we reduce the resolution of every feature domain by reducing the
+resolution of the input audio, then we would naturally expect the classifier to
+train more quickly.
+
+\subsection{Zero Crossing Rate}
+
+When initially building the first implementation of the system, the performance
+bottleneck was not in the training of the classifier, but rather the
+application of the feature transformations to the input audio. One of the ones
+that was taking by far the longest to execute was the zero crossing rate
+feature transformation: the reason for this was that it was, in Python,
+iterating through each element in the array and comparing the sign to the
+previous element and taking a sum. The Python as it stood then is given in
+\ref{list:zcr-slow}.
+
+
+\begin{lstlisting}[frame=single,caption=Original slow zero crossing rate implementation, label=list:zcr-slow]  % Start your code-block
+    def zero_crossings(self, frame, fft):
+        sum = 0
+        for i in xrange(1,len(frame)):
+            sign1 = -1 if values[i-1] < 0 else 1
+            sign2 = -1 if values[i] < 0 else 1
+            if sign1 != sign2:
+                sum += 1
+\end{lstlisting}
+
+This was optimised using the numpy library which was written in pure C, with
+optimised SSE instructions, this gave a huge speedup, on the order of taking 4 hours to
+pull the data set in down to something like only 10 minutes. For training numpy also
+allows one to apply ones transformations in a batch, this optimisation was not
+used for the ZCR feature but was used to give us the ability to perform the
+fourier transform over the entire training set in one go for maximum throughput
+whilst training, this feature will obviously not be available during real time
+classification because we can only apply transforms to each frame as they come
+in. For interest the numpy python code for the zero crossing rate feature is
+given in \ref{list:zcr-fast}.
+
+\begin{lstlisting}[frame=single,caption=Numpy fast zero crossing rate implementation, label=list:zcr-fast]
+    def zero_crossings(self, frame, fft):
+        return len(numpy.where(numpy.diff(numpy.sign(frame)))[0])
+\end{lstlisting}
+
+\subsection{Windowing process}
+
+The windowing process that broke the continuous streams of audio into 16ms
+windows was initially also written in pure python and was very slow. This is a
+problem that affects both the real world and training/test scenarios that we
+have where the data is available as a batch. This is because the audio from the
+hardware data stream is not provided as single frames but is rather buffered
+to achieve better throughput, and we could expect between 2048 and 16384 frames
+of audio at a time (corresponding to 0.04 to 0.34 seconds of lag, depending on
+the quality of the audio hardware that is being used). As such being able to
+perform a batch transformation of the audio to 16ms windows very quickly is very
+important.
+
+The initial pure python implementation suffered from the problem of working
+when we had a very small training set to work with, taking only a few minutes
+to execute but degraded very much linearly with the amount of audio that had to
+be processed and when the data set grew to many hours, it would run in roughly
+real time, but the overall system would run much more slowly due to this
+windowing process not being the only transformation that happened. The original
+Python code is given in \ref{list:window-slow}. Note that in this
+implementation the audio is padded with zeros until it meets a round number of
+window lengths. This choice could have potentially degraded accuracy, but
+seemed better than trying to read the rest of the audio from the file given
+that if the samples were not a round number then the next audio frames had been
+labelled with a different class. Also given that we trained with 200ms wide
+windows this means that only $1$ in every $12$ windows would suffer from this
+problem.
+
+
+\begin{lstlisting}[frame=single,caption=Original slow windowing implementation, label=list:windowing-slow]
+def samples_to_16ms_frames(samples, framerate=48000):
+    build = []
+    ptr = []
+    frames = []
+
+    while ptr < len(samples):
+        ptr += 1
+        if ptr \% frame_size == 0:
+            frames.append(build)
+            build = []
+
+    if len(build) < frame_size:
+        length_diff = frame_size - len(build)
+        build += [0]*length_diff
+
+    frames.append(build)
+
+    return frames
+
+\end{lstlisting}
+
+One of the most major problems with this implementation is that a lot of memory
+is allocated as it is executing. Specifically the build array is reallocated
+every time a frame completes and also many temporary values, such as the array
+of zeros at the end of execution will be garbage collected. As discussed above
+having a slow windowing process is very problematic for a system which operates
+on windowed audio. However, a little bit of thought leads to a huge performance
+gain with this system. Specifically the 16ms windows at 48000Hz are 768 samples
+wide. This means that we can append zeros to our samples array until it has a
+length that is evenly divisible by 768 and then reshape it into a 2 dimensional
+array that is 768 by the total number of windows. Numpy once again has a fast
+vector function to do this once the memory has been allocated, and we took full
+advantage of that. This made the function go from showing up at the top of a
+profile on a reduced run of 20 minutes, to disappearing down to the bottom and
+giving a speedup to around 10 minutes. On the full run this reduced the
+training time when combined with the zero crossing rate optimisation down to 20
+minutes. The optimised numpy code is given in \ref{fig:windowing-fast}.
+
+\begin{lstlisting}[frame=single,caption=Optimised windowing implementation, label=list:windowing-fast]
+
+def samples_to_16ms_frames(samples, framerate=48000):
+    frame_size = int(48000*16.0/1000)
+    while len(samples) \% frame_size != 0:
+        samples.append(0)
+
+    mses = numpy.reshape(samples, (-1, frame_size))
+    return mses
+
+\end{lstlisting}
+
+\subsection{Classifier optimisation}
+
+The random forest classifier sits at the core of our system as the actual VAD
+component of the VAD detector, so it is important that it runs as quickly as it
+can. The random forest implementation that we have used, which is provided by
+the SKLearn library is written in optimised C and provides options to train
+trees in parallel. This is possible because the trees in the random forest are
+independent of each other and are trained by performing random selection with
+replacement from the training set as well as random selection of a subset of
+features. This way many trees will be grown all with different biases on the
+training set in the hope of improving classification accuracy.
+
+We took full advantage of the parallel training option using 3 cores to train 3
+times as quickly. However this exposed a minor problem when we were initially
+passing the entire window as samples to the classifier instead of our reduced
+feature set. The problem was that python has no real threading support and so
+the data could not be shared across threads but was instead copied across
+processes with a very large data set this lead to memory problems. The solution
+to this whilst inelegant was effective: we increased the amount of ram in the
+machine that we were training on to 32 gigabytes. This is noted as an
+implementation detail in case future research is done with either our data set
+or one of similar size: building features that effectively compress the size of
+the data set whilst retaining much of the detail are very important when
+working with a large data set.
+
+This becomes particularly important as we envisage production ready
+implementations of this system as working on many hundreds of hours of audio
+instead of many tens and as such would look to either using a language which
+does not require the data set to be copied across many processes or not training
+across many processors but instead training in serial.
+
+\subsection{Results of optimisation}
+
+To give some idea of how effective these optimisations were we decided to time
+the fully optimised implementation loading all the audio data that was labelled
+off disk, applying feature transformations (mostly one at a time, with the
+batch fourier transform and batch windowing) and training the classifier. The
+results of this optimisation are reported as an improvement on the some initial
+4 hours that it took to perform these steps. We have reported with both hot and
+cold disk caches to give some idea of the affect of storing all the data in the
+disk cache which is possible due to the large amount of ram on the machine.
+The results are in \ref{table:optimisation-results}. As we can see the hot disk
+cache helps a bit, which was very useful when repeatedly doing training runs as
+the classifier was being improved.
+
+\begin{figure}
+    \begin{tabular}{|l|l|}
+        Disk cache & Time (s) \\ \hline
+        Cold & 370 \\
+        Hot &  340 \\
+    \end{tabular}
+    \caption{Results of performance optimisations}
+
+    \label{table:optimisation-results}
+\end{figure}
+
+\section{Summary of execution}
+
+In this project we have implemented a random forest classifier that gives a
+very high classification accuracy on the problem data set that it has been
+trained against. Much of the implementation's classification accuracy comes
+from the fact that our features have a very low level of inter correlation and
+more specifically only 9 of the 625 possible feature pairs have a correlation
+of more than 0.5. This is encouraging as it indicates that our features give
+a very independent view on the data set, and as such we would very much look
+to this combination of features to be considered for future VAD systems.
+
+Having independent features, whilst encouraging, is not enough on its own to
+give a good classification rate, one thing that is very important is to have a
+good classification algorithm for your features. The classification algorithm
+that we have used (the random forest) gives a very good classification with the
+parameters that we have chosen, and in the next chapter we investigate whether
+other, commonly used, classification algorithms can give a better result on our
+data set.
+
+One of the critical requirements of this classification system is that it has
+good performance when working with representative data, and was have documented
+some of the optimisations that we have made with our system. Future
+implementations of a VAD system may wish to build on this when developing their
+featuresets or future classifiers. Specifically during training on large data
+sets it is important to ensure that all feature transformations can be applied
+in a batch rather than serially to each instance. For example: the numpy
+library can do a batch FFT across an entire 2d data array instead of performing
+the FFT to each instance individually. This gained a large speedup, and we
+would definitely recommend the numpy library for anyone doing any further work
+in this space.
+
+We feel that this implementation solves the main aim of this project which is
+to build a classifier capable of being integrated into existing VOIP and speech
+recognition systems. Our system varies from the traditional VAD system in that
+instead of merely separating background noise and human speech it takes into
+account a third category as part of its negative class which is keyboard noise.
+Based on the combination of features that we have which all are more
+discriminant than the baseline (> 50\% classification accuracy) we believe that
+this system is absolutely suitable for the application that we have chosen.
+This system is, however, not quite ready for production usage as a VAD system
+because it is trained against a relatively small sample size, and in the next
+section we will show that it completely degrades when presented with an unseen
+speaker. The solution to this problem is to train against many more speakers
+than we have trained against at the moment in order to get a more
+representative sample. This is very much future work and outside the scope of
+this project.
+
+The other aim for this project that we have achieved is building a portable
+dataset that other researchers may be able to use in order to build their own
+VAD system. Our dataset varies from others in that instead of containing
+continuous speech with some background noise that is mostly
+stationary\footnote{Stationary noise is noise that is continuous and of a roughly
+non-varying amplitude}, our dataset contains a large amount of noise impulses
+that occur in a non-repeating fashion due to keyboard actions and mouse actions
+which are not usually regularly timed. Some of the lack of regular timing is
+due to the fact that we recorded gamers whilst playing videogames, and the
+non-uniform random nature of the games makes for a good non-uniform sample of
+noise.
+
+In the next section we evaluate some of the parts of the classifier that we
+have built that are easily varied with regards to both classification and
+processing performance, as well as looking at other classification systems that
+could possibly be used.
 
 %-----------------------------------
 %-----------------------------------
@@ -1959,29 +2321,209 @@ The authors' recommendation would be to use the decision forest implementation
 because it is both the most accurate overall, and in the far left of the ROC
 curve (most lax, fewest false negatives).
 
-%\noindent
-%This chapter is intended to evaluate what you did.  The content is highly 
-%topic-specific, but for many projects will have flavours of the following:
+\section{Varying the number of estimators in the ensemble}
+
+The random forest classifier takes two parameters, aside from the actual
+instances used as examples. These parameters are the number of trees to train
+and the maximum depth to train the trees to. In this section we investigate the
+affect on classification accuracy of training more trees. We explicitly do not
+investigate processing performance of the classifier as the relationship between
+number of estimators and performance is essentially linear.
+
+In order to perform this experiment we used the same 50\% training, 50\% test
+split that we used before, and trained with 500 trees, and then 100 through 10
+in steps of 5. The reason for the 500 trees is to see whether having a huge number
+of extra trees helps, or is generally overfitting. All the other tests are merely
+designed to see if 100 is a reasonable choice.
+
+The results are shown in \ref{fig:roc-trees} as a curve of a count of the
+trees versus the ROC area under the curve metric for each classifier.
+
+\begin{figure}
+    \includegraphics[width=10cm]{roc_differing_trees.png}
+    \caption{ROC area under curve for different trees}
+    \label{fig:roc-trees}
+\end{figure}
+
+500 is slightly more accurate than 95 with 0.97428 versus 0.97432 but at this
+point we are into diminishing returns and would not consider this to be a
+statistically significant difference.
+
+An interesting observation we make with this graph is that in general the odd
+numbered counts of trees seem to cause peaks in accuracy when compared with their
+even numbered counterparts, for example the last 4 entries in the area under the
+curve metric are shown in \ref{table:roc_spike}.
+
+\begin{figure}
+    \begin{tabular}{|l|l|}
+        Number of trees & ROC AUC \\ \hline
+        500             & 0.9743 \\ \hline
+        100             & 0.9724 \\ \hline
+        95              & 0.9743 \\ \hline
+        90              & 0.9728 \\ \hline
+        85              & 0.9737 \\ \hline
+    \end{tabular}
+    \caption{ROC AUC metrics for various numbers of trees}
+    \label{table:roc_spike}
+\end{figure}
+
+This result is somewhat counterintuitive as we would expect more trees to
+generally give a better classification result, it is possible that the "voting"
+process of the random forest favours odd numbers as it can break ties that way
+instead of making a guess. These differences are, however, small so to
+determine if they are truly important we decided to take the 10 fold cross
+validation results of the 100 trees and 95 trees classifiers and do a
+statistical test to determine if they are statistically significantly
+differently accurate. In order to do this we use the standard difference of
+two means t-test. The t test's results are shown in \ref{fig:t-test}.
+
+\begin{figure}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        Number of trees & Mean accuracy in cross validation & StDev accuracy in cross validation \\ \hline
+        100             & 0.8900                            & 0.0025                             \\ \hline
+        95              & 0.8902                            & 0.0012                             \\ \hline
+    \end{tabular}
+
+    $$H_0:\mu_1-\mu_2=0$$
+    $$H_1:\mu_1-\mu_2>0$$
+
+    The z score is:
+
+    $$z=\frac{0.8900\times0.8902}{\sqrt{\frac{10\times0.025+10\times0.0012}{10+10-2}}\times\sqrt{\frac{10+10}{10\times10}}}=-0.0008$$
+
+    This is nowhere near high enough for us to conclude statistical significance and so we assume these come from the same distribution.
+
+    \label{fig:t-test}
+
+\end{figure}
+
+Whilst it is interesting to note the spikeyness, the statistical test's results
+show that they are clearly not significant. Obviously more trees lead to a reduction
+in processing performance, as a tradeoff for classification accuracy. We think
+that using 100 trees seems like a sensible default, and it was also the number of
+trees the system was trained against, giving it the maximum chance for the highest
+classification accuracy as the features and classifier were built in conjunction.
+
+\section{Varying the maximum depth of the classifier}
+
+A commonly taught technique for reducing overfitting of a decision tree
+classifier is to prune the trees to a specified
+depth\cite{Bramer:2002:PCT:646288.686755}. This works because by default
+decision trees train until all the nodes in the tree are of uniform class. This
+leads to a very high level of bias to the specific data set that the tree has
+been trained on. The random forest is somewhat robust to this problem because
+it trains many trees on different samples of the original data
+set\footnote{Random forests train each tree by sampling the original data set
+with replacement} as such it is common to train random forests to the maximum
+depth, instead of pruning them.
+
+In this section we will investigate whether pruning our forests helps. For this
+experiment we used the 100 estimator tree that was used for the entire
+implementation section and depths were chosen between 10 and 1000 (in steps of
+50) and no pruning. Here we have reported the accuracy as a graph of area
+under the ROC curve versus depth to prune to. The maximum depth tree is not
+included in this graph as it is not clear what depth it is grown to, so instead
+it's result is reported in the figure alongside the graph. The results are shown
+in \ref{fig:roc-depths}.
+
+\begin{figure}
+    \includegraphics[width=10cm]{roc_differing_depth.png}
+
+    \caption{ROC AUC metrics for different tree depths}
+    \label{fig:roc-depths}
+\end{figure}
+
+As we can see from this curve that after about 60 trees we hit the accuracy
+limit of around 0.98. Note that these were trained with a much larger amount of
+data than the previous tests which is why the accuracy jump probably occurred.
+Most importantly it's worth noting that there appears to be an accuracy limit
+around 98\% and regardless of how many trees are trained this accuracy result
+is reached. As such we conclude that varying the depth of the forest really
+does not make all that much difference to the classification. As such we would
+recommend either using a maximum depth of around 200 or training to the maximum
+depth. The justification for maximum depth being that that is what the feature
+set was trained with and as such they may be optimised together. The
+justification for 200 being that a smaller depth allows the classifier to train
+and classify more quickly which is important in our real time application.
+
+\section{Comparison with existing VAD algorithms}
+
+In this section we compare our system to other VAD algorithms, for the most
+part we did not directly implement other VAD algorithms, so instead in this
+section we perform a comparative analysis on any accuracy values reported in
+the papers discussing the other algorithms, and also a comparison of our system
+against a system that implements only energy and zero crossing rate against our
+data set. Whilst we have noted that the zero crossing rate did have a very high
+level of individual predictive power (~70\%) it was given a relatively low
+importance by the random forest classifier that we used, indicating that it
+may not be a very good separator of our feature space.
+
+In \cite{shin} they report their highest accuracy as a combination of all their
+features and using a classifier that passes both the next and previous frame
+into their classifier. Our system explicitly does not take any other frames
+than the current one. The reason for this design decision was that we felt that
+introducing an additional 16ms of latency into the audio processing would
+needlessly reduce the performance of the system. In other words, we felt that
+the possible classification rate gain that we would achieve by passing extra
+surrounding information in would not outweigh the cost of delaying the
+processing, as VAD systems live or die based on how fast they can process data.
+In \cite{shin} the specific accuracy they report with the 0dB noise level
+(equivalent to the spoken audio being as loud as the background noise) is
+87.73\%. Our highest classification accuracy that we were able to report in
+cross validation was 91\% and we also have noise attenuated to roughly the same
+0dB level.  We feel that the reason that our system is more accurate than the
+system in \cite{shin} is that we have used a very advanced machine learning
+algorithm (the random forest) instead of the decision tree, which is the system
+that was used in \cite{11}. Additionally we have more features: their system
+uses only 6 instead of our 25. It is worth noting that this may mean that the
+performance of our system is worse but we have experimentally determined that
+our system runs in faster than real time, and so this is not a concern.
+
+In \cite{moattar} they build a threshold based VAD system, and interestingly it
+is not tested against English speech, but rather Farsi. This means that a
+direct comparison of accuracies is not possible as we have not trained our
+system against a Farsi coprus. They report
+approximately\footnote{\cite{moattar} did not report 0dB attenuated noise
+accuracies and so figures here are reported by linearly interpolating between
+the 5dB and -5dB values.} 86\% accuracy for their system with white noise at
+0dB. This system is much more simple than the \cite{shin} system and so the
+accuracy is slightly degraded. It is worth noting that this system uses much
+more long term information than the \cite{shin} system specifically using
+approximately 30 frames of threshold averages to build the classification. This
+system, however, because of it's threshold based nature does not introduce 30
+frames of latency. This is because the previous frames before the system starts
+are assumed to be silence and are then updated as execution continues.
+
+Our system compares favourably to these systems, and the reason we have done
+this investigation is to attempt to gain an understanding of the effects of
+noise on VAD systems in general. This result means that our system has somewhat
+improved on the state of the art, both by solving a new problem and by
+improving the generalised accuracy of some of the VAD systems from the
+research. There is one caveat here which is that, because our training set is
+relatively small the classification accuracy may get smaller as more data is
+added. The reason for this is that bigger data sets are generally more
+statistically sparse, and as such our classifier may be taking advantage of the
+small data set size to come to a very accurate classification.
+
+%\noindent This chapter is intended to evaluate what you did.  The content is
+%highly topic-specific, but for many projects will have flavours of the
+%following:
 %
-%\begin{enumerate}
-%\item functional testing, inc. analysis of failure cases,
-%\item performance results, and analysis of said results that draw some 
-%      form of conclusion,
-%      and
-%\item evaluation of options and decisions within the project, and/or a
-%      comparison with alternatives.
-%\end{enumerate}
+%\begin{enumerate} \item functional testing, inc. analysis of failure cases,
+%\item performance results, and analysis of said results that draw some form of
+%conclusion, and \item evaluation of options and decisions within the project,
+%and/or a comparison with alternatives.  \end{enumerate}
 %
-%\noindent
-%This chapter often acts to differentiate project quality: even if the work
-%completed is of a high technical quality, critical yet objective evaluation 
-%and comparison of the outcomes is crucial.  In essence, the reader wants to
-%learn something, so the worst examples amount to simple statements of fact 
-%(e.g., ``graph X shows the result is Y''); the best examples are analytical 
-%and exploratory (e.g., ``graph X shows the result is Y, which means Z; this 
-%contradicts [1], which may be because I use a different assumption'').  As 
-%such, both positive {\em and} negative outcomes are valid {\em if} presented 
-%in a suitable manner.
+%\noindent This chapter often acts to differentiate project quality: even if
+%the work completed is of a high technical quality, critical yet objective
+%evaluation and comparison of the outcomes is crucial.  In essence, the reader
+%wants to learn something, so the worst examples amount to simple statements of
+%fact (e.g., ``graph X shows the result is Y''); the best examples are
+%analytical and exploratory (e.g., ``graph X shows the result is Y, which means
+%Z; this contradicts [1], which may be because I use a different assumption'').
+%As such, both positive {\em and} negative outcomes are valid {\em if}
+%presented in a suitable manner.
 
 % -----------------------------------------------------------------------------
 
@@ -1989,29 +2531,154 @@ curve (most lax, fewest false negatives).
 \label{chap:conclusion}
 
 {\bf A compulsory chapter, of roughly $2$ pages} 
-\vspace{1cm} 
 
-\noindent
-The concluding chapter of a thesis is often underutilised, in part because
-it is often left until close to the deadline and hence does not get enough 
-attention.  Ideally, the chapter will consist of three parts:
+\section{Review of contributions}
 
-\begin{enumerate}
-\item (Re)summarise the main contributions and achievements, in essence
-      summing up the content.
-\item Clearly state the current project status (e.g., ``X is working, Y 
-      is not'') and evaluate what has been achieved with respect to the 
-      initial aims and objectives (e.g., ``I completed aim X outlined 
-      previously, the evidence for this is within Chapter Y'').  There 
-      is no problem including aims which were not completed, but it is 
-      important to evaluate and/or justify why this is the case.
-\item Outline any open problems or future plans.  Rather than treat this
-      only as an exercise in what you {\em could} have done given more 
-      time, try to focus on any unexplored options or interesting outcomes
-      (e.g., ``my experiment for X gave counter-intuitive results, this 
-      could be because Y and would form an interesting area for further 
-      study'').
-\end{enumerate}
+In this project we set out to build a new data set that would enable us to
+build a voice activity detector that can accurately distinguish human speech
+from background noise and keyboard noise in personal computing environments. We
+also set out to actually build the detector itself. One of the aims of the
+project was exploring the new space of building a voice activity detector that
+is trained not only against continuous background noise of a roughly stationary
+amplitude, but investigating whether or not it is possible to build a detector
+that can robustly distinguish noise generated by common peripherals in noisy
+personal computing environments (such as mice and keyboards) from spoken voice.
+
+The dataset that we built is in a relatively portable form, 48000KHz 16 bit wav
+files, with a separate sqlite3 database holding the information about class
+with time. The size of the labelled dataset is relatively small (around 1 hour)
+with a total of 24 hours of audio in the dataset. We believe that a further
+contribution that could be made would be for someone to label the rest of the
+data set. The labelled data was very much not the primary goal of this project
+which is why a relatively small amount of the data set is actually labelled. We
+also investigated the possibility of reducing the size of this dataset with a
+view to publishing it in a format that might benefit other researchers. Based
+on our investigation halving the bits per sample of the audio from 16 bit to
+8 bit should have very little affect on future classification. Our feeling is
+that publishing this corpus may further help VAD research and so are very
+interested in publishing it.
+
+One of the other main achievements of this project is building a classifier
+that capable of accurately distinguishing human speech from the background
+noise classes we have already mentioned at length. Our feeling is that our
+choice of classifier (the random forest) has hugely benefited the
+classification accuracy of this project enabling us to classify data with a
+very high degree of accuracy (some 4 percent over a previous piece of
+research\cite{shin}. This is a somewhat expected result from the use of more
+modern classification systems than older systems. We have also contributed a
+evaluation of which classification systems perform best over this dataset,
+showing that particularly nearest neighbor classifiers perform particularly
+badly on our problem set. Nearest neighbor classifiers work in a very similar
+way to the threshold based systems that are occasionally used for VAD systems,
+and as such we feel that more modern approaches to VAD systems should not use
+threshold or neighbor based approaches but more modern machine learning
+techniques such as decision trees or ensemble methods.
+
+We have also contributed some significant research into features that work well
+for VAD for this particular non-stationary noise problem. Specifically we have
+shown that the somewhat untraditional features of the very low frequency band
+(0-100Hz frequency domain energy band and components 0-3 of the PSD) provide
+very good classification accuracy. We have also shown that the more traditional
+features such as total window energy degrade under the presence of impact
+noises such as those that are commonly associated with the repeated impacts of
+someone typing on their keyboard. We feel that in particular our combination of
+25 features give a very good cross spectrum classification that makes our
+classifier amenable to many voice related problems as a number of our features
+are not targeted at our background noise class but rather our voice class.
+
+\section{Project Status}
+
+The status of our project is that we have implemented nearly all of the
+technology needed for our VAD system. We had originally intended to implement a
+long time classifier, sometimes referred to as a hangover system. The idea of
+these systems is to smooth the transition between transmission and
+non-transmission classes. Our system does give a somewhat back and forth
+classification in somewhat ambiguous low amplitude voice frames. We believe
+that this could be the site of some future research and certainly based on
+some experience a median filter may be sufficient to simply remove this spotted
+noise.
+
+The remainder of our aims have been totally implemented. We have built a very
+simple script to enable us to label voice versus other types of noise both
+accurately and quickly. This is what enabled us to build our corpus to train
+the classifier against and we have used this to build our classifier. As
+outlined above we would like to see this corpus used by others to build future
+classifiers and more specifically to extend this corpus to build a system that
+is robust to unseen speakers and potentially unseen languages.
+
+The major aim of this project was to build a classifier that has a high
+accuracy when classifying voice frames against the noise and keyboard frames.
+We feel that our implementation completely satisfies this aim, specifically the
+classifier that we have built can both be trained and classify in much faster
+than real time and the feature transformations that we use are also amenable
+to this.
+
+Another minor aim of this project that we feel that we have achieved was to
+build a set of features that can be processed more easily than the entire audio
+window and also present a view of the data that is amenable to classification.
+Obviously during a machine learning project the classifier and the features are
+built hand in hand, and we feel that the end result here of a high
+classification accuracy could not have been achieved without the time that we
+spent designing our features.
+
+\section{Future work}
+
+Much of the work of this thesis was in designing features that allow the
+classification system that we used to extract all of the variance of the data
+set that we had. The handcrafted feature design that we did was effectively a
+dimensionality reduction from 768 to 25 whilst presenting the data in a format
+that was amenable to machine learning algorithms. It is possible that instead
+of doing explicit feature design, we could merely pass the entire data in and
+use what is known as a "hash kernel"\cite{Weinberger}. This is a way of
+building a dimensionality reduction from a hash function. It may be possible to
+build a feature set from a hash kernel rather than by hand crafting. Future
+work could possibly involve building a VAD system that uses hashkernels instead
+of handcrafted features which could be useful as this would remove future need
+to change features based on new types of audio.
+
+The other significant piece of future work that we would like to see is the
+taking forward of this admittedly prototypical system for use in an actual
+production application. This project was born out of frustration with existing
+VAD systems detecting keyboard impulses as actual voice and as such the
+integration of this system with either the skype or mumble systems would be
+amazing to see. Before this can happen the corpus that we created would need to
+be expanded to include many different speakers including more females and more
+than one language (English). Based on all of our analysis though we see no
+reason why this shouldn't be possible.
+
+In conclusion: we feel that this system has been implemented effectively
+solving a practical problem that exists in the landscape of personal computing.
+We have created features that are mostly orthogonal to each other providing a
+really useful view on the dataset that we have created, and created a
+classifier that uses these features to provide a very highly accurate
+classification. The VAD system that we have built is truly robust to noisy
+personal computing environments with the caveats that we have stated earlier in
+this paper and we feel that our implementation is a success.
+
+
+%\vspace{1cm} 
+%
+%\noindent
+%The concluding chapter of a thesis is often underutilised, in part because
+%it is often left until close to the deadline and hence does not get enough 
+%attention.  Ideally, the chapter will consist of three parts:
+%
+%\begin{enumerate}
+%\item (Re)summarise the main contributions and achievements, in essence
+%      summing up the content.
+%\item Clearly state the current project status (e.g., ``X is working, Y 
+%      is not'') and evaluate what has been achieved with respect to the 
+%      initial aims and objectives (e.g., ``I completed aim X outlined 
+%      previously, the evidence for this is within Chapter Y'').  There 
+%      is no problem including aims which were not completed, but it is 
+%      important to evaluate and/or justify why this is the case.
+%\item Outline any open problems or future plans.  Rather than treat this
+%      only as an exercise in what you {\em could} have done given more 
+%      time, try to focus on any unexplored options or interesting outcomes
+%      (e.g., ``my experiment for X gave counter-intuitive results, this 
+%      could be because Y and would form an interesting area for further 
+%      study'').
+%\end{enumerate}
 
 % =============================================================================
 
