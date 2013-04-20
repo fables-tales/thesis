@@ -16,6 +16,9 @@
 \usepackage{parskip}
 \usepackage{csvsimple}
 \usepackage{rotating}
+\usepackage{float}
+\floatstyle{boxed}
+\restylefloat{figure}
 \widowpenalties 1 10000
 \raggedbottom
 
@@ -196,7 +199,7 @@ VOIP                &:     & Voice Over IP\\
 This thesis would not have been possible without the continual support of my
 supervisor {\bf Dr Rafal Bogacz}, who has spent many hours with me this year giving
 me advice on how to organise the execution of this project, as well as ideas
-for how to make improvments when I was stuck.
+for how to make improvements when I was stuck.
 
 I would also like to thank:
 \begin{itemize}
@@ -235,67 +238,72 @@ I would also like to thank:
 
 \vspace{1cm}
 
-The term voice activity detection (sometimes referred to as voice endpoint
-location\cite{Tuske}) refers to the algorithms used to distinguish frames of
+The term voice activity detection \footnote{sometimes referred to as voice endpoint
+location\cite{Tuske}} refers to the algorithms used to distinguish frames of
 audio that contain speech from those that contain background
 noise\cite{ramirez}. The motivation for this project is that we found, based on
 personal experience, that existing VAD algorithms struggle to efficiently
-distinguish the noise commonly associated with personal computers (typing and
-mouse clicks) from speech.
+distinguish the noise commonly associated with personal computers, such as typing and
+mouse clicks, from speech.
 
 \section{Applications}
 
 The two main applications of VAD systems are VOIP and Speech Recognition. These
-systems both deal with human voice coming in from microphone input, and are
-only concerned with what the people that are actually saying, rather than the
-entirety of any particular audio sequence. Given these constraints it seems
-natural to place a system which only passes through the parts of the audio that
-contain human speech.
+systems have to deal with microphone input and have a strong need to determine
+whether or not human speech is present in any particular frame of audio. These
+systems are not concerned with all of the audio within the sequence. As such it
+seems intuitive to build a detector that can remove frames of audio that do not
+contain speech.
 
 \subsection{Speech Recognition}
 
 Speech recognition systems are responsible for working out what is being said
 in a given sequence of audio. They must be robust to different speakers,
 environments, hesitation, stuttering and other human factors. It is often noted
-that these systems degrade rapidly in the presence of noise\cite{Moreno} given
-that increasingly with systems like Siri\texttrademark\cite{siri} (Apple's
-speech recognition system for iOS\texttrademark) we find that people are using
-systems that require accurate detection of what is being said in potentially
-noisy outdoor environments.
+that these systems degrade rapidly in the presence of noise\cite{Moreno}.
+Increasingly with like Siri\texttrademark\cite{siri} (Apple's speech
+recognition system for iOS\texttrademark) people are using systems that require
+accurate detection of what is being said, in potentially noisy outdoor
+environments.
 
 Speech recognition systems can have their accuracy improved\cite{shin} by
-employing VAD systems, which are used to locate speech endpoints. The speech
-endpoints are then passed into the speech recognition system which then has to
-only search the places that the VAD system has flagged up for words, rather
-than the entire sequence of audio. If the VAD system is sufficiently sensitive
-it may also be able to accurately locate the pauses between words the user
-makes, allowing the speech recognition system to assume 1 or very few words
-will lie within each part of detected speech.
+employing VAD systems, which are used to locate speech endpoints. 
 
-There is a well known speech recognition benchmark suite called
-Aurora\cite{aurora}, over this benchmark suite it was found\cite{ramirez-2}
-that by improving the VAD used from the G.729 ITU-T\cite{itut} standard to a
-specialised detector that word accuracy (the number of words correctly
-recognized) jumped approximately 17\% in the best case.
+The speech endpoints are then passed into the speech recognition system. This
+means that the system only has to search the places that the VAD system has
+marked as containing speech, rather than the entire sequence of audio. If the
+VAD system is sufficiently sensitive it may also be able to accurately locate
+the pauses between words the user makes. This enables the speech recognition
+system to assume 1 or very few words will lie within each part of detected
+speech, which helps to improve speech detection accuracy.
+
+A motivating example for improving speech detection accuracy, by using an
+improved VAD algorithm can be found in \cite{ramirez-2}. They built a
+specialised detector that improved over the G.729 ITU-T\cite{itut} standard.
+They tested against the well known Aurora\cite{aurora} speech recognition
+benchmark suite, using the same speech detector with the two different VAD
+algorithms. They found that, with an improved VAD algorithm, they could
+improve the number of words correctly recognized by 17\% in the best case.
 
 In the context of this project we believe that our detector may be able to
 improve speech recognition through improved voice activity detection, but it is
-not our primary goal, as we forsee fewer circumstances where a user is going to
-require speech recognition whilst interacting with their computer, than we see
-cases where VOIP calls are occurring at the same time as someone is interacting
-with the keyboard and mouse inputs.
+not our primary goal, as we foresee fewer circumstances where a user is going
+to require speech recognition whilst interacting with their computer, than we
+see cases where VOIP calls are occurring at the same time as someone is
+interacting with the keyboard and mouse inputs.
 
 \clearpage
 \subsection{VOIP and Telephony}
 
-When used in a VOIP context VAD systems are typically designed such that they
-signal that frames detected as noise are not to be transmitted, preventing the
-person at the other end of the call from hearing the noise. Often this is a
-component in a system that also includes some noise filtering and compression
-the mumble\cite{mumble} system for example includes both an amplitude and
-signal-noise ratio based VAD, and then passes the output into the
-CELT\cite{celt} codec, here the VAD system silences any noise detected frames
-and CELT efficiently compresses the silence to ensure a bandwidth saving.
+When used in a VOIP context, VAD systems are used to prevent the transmission
+of noise within a conversation. This is typically achieved by setting any
+frames detected as noise to have zero amplitude.  Often this is a component in
+a system that also includes: noise filtering and compression. The
+Mumble\cite{mumble} system for example includes both an amplitude and a
+signal-noise ratio based VAD. The output of the VAD is then passed into the
+CELT\cite{celt} codec. In Mumble the VAD system silences any frames detected as
+noise and CELT efficiently compresses the silence to ensure a bandwidth
+saving.
 
 VAD algorithms allow for large bandwidth savings during both analogue
 telephone calls and VOIP calls. The reason for this bandwidth saving is that in
@@ -304,19 +312,22 @@ the time of the call is occupied by silence. Specifically: 60\% of the time is
 occupied by neither person speaking\cite{shah} in a dialogue and 20\% of the
 time is occupied by neither person speaking in a monologue.
 
-In the case of a traditional analogue telephone call, the bandwidth saving is
-achieved by "Time Assigned Speech Interpolation" whereby a link can carry more
-calls by assigning resources only to those calls that currently have someone
-speaking on them, causing a significant saving when, for example, speech is
-only travelling in one direction (1 slot instead of 2) or allocating no slots
-to the call when neither party is speaking\cite{5016247}.
+In the case of a traditional analogue telephone call: bandwidth is measured by
+counting the total number of slots on wires that are being taken up by a number
+of calls. The bandwidth saving is achieved by "Time Assigned Speech
+Interpolation" whereby a link can carry more calls by assigning resources only
+to those calls that currently have someone speaking on them. This will cause a
+significant saving. For example: if speech is only travelling in one direction
+only 1 slot can be allocated instead of 2. Another way a saving is achieved is
+by allocating no slots to the call when neither party is
+speaking\cite{5016247}.
 
 With a VOIP call, a significant bandwidth saving is achieved by nature of the
 fact that if transmission were continuous, both parties would be transmitting
 at least 64,000 bits per second\cite{ciscovad}. If we assume that for most of
 the call only one person is speaking, and that our VAD is sufficiently good at
 distinguishing noise from human speech then we will find at least a 50\%
-bandwidth saving. Additionally if there are pauses in speech, the VAD will
+bandwidth saving. Additionally if there are pauses in speech a VAD will
 provide an even greater bandwidth saving.
 
 
@@ -326,40 +337,48 @@ Seeing that both user experience can be improved, and that bandwidth savings
 can be achieved through the use of voice activity detection systems, the
 question is what can be done to improve these. The specific goal of this
 project is to build a voice activity detection system which is robust in the
-typical environment of a modern computer user. Whilst these environments do
-have a low background noise, they often contain very high amplitude noise
-impulses that are caused by the user typing on the keyboard, or interacting
-with the mouse.
-
-As is discussed in the implementation section of this project we show that
-these systems do not have a high detection accuracy when presented with these
-noise impulses. Our aim is to build a VAD system that does provide a high level
-of accuracy against this specific type of noise.
+typical environment of a modern computer user. Typically these environments do
+have a low level of background noise. However, these environments do,
+typically, suffer from the problem of irregular high amplitude noise impulses
+that are caused by the user typing on a keyboard or clicking a mouse.
 
 We believe that the problem in modern systems exist because most VAD algorithms
 are designed for noisy background environments\cite{shin}, but they are not
 designed for short, loud noise impulses. These noise impulses are common when a
 user is typing on their keyboard. There are two modern consumer VOIP systems
-that we used and were found to detect keyboard noise or mouse noise as someone
-speaking. Those were: Mumble\cite{mumble}, a low latency system designed for
-gamers to communicate whilst playing with each other and
-Skype\texttrademark\cite{skype} a well known consumer VOIP solution designed
-for single or many person VOIP calls. Especially in the case of mumble it is
-essential that keyboard noise is filtered out, as gamers tend to be interacting
-with their keyboard continuously whilst playing videogames, possibly drowning
-out much of the real communication, or causing annoyance.
+that we used, both were found to transmit keyboard noise and mouse noise and
+transmit them as if they were someone speaking. The systems were:
+Mumble\cite{mumble}, a low latency system designed for gamers to communicate
+whilst playing with each other, and Skype\texttrademark\cite{skype}, a well
+known consumer VOIP solution designed for single or many person VOIP calls.
+Especially in the case of mumble it is essential that keyboard noise is
+filtered out, as gamers tend to be using their keyboards continuously whilst
+playing video-games. This noise could possibly drown out much of the real
+communication or cause annoyance.
 
 The high-level objective of this project is to build a robust voice activity
 detector system that can accurately distinguish voice from keyboard and mouse
-noise with suitable performance for use in real time systems. More specifically
-the concrete aims are:
+noise with suitable processing performance for use in real time systems. More
+specifically the concrete aims are:
 
 \begin{enumerate}
+
     \item Survey existing VAD systems for accuracy against our dataset
+
+    \item Build a corpus of Voice/Background Noise/Keyboard Noise that can be
+        used to train our VAD system against. We also aim to ensure that this
+        corpus can be used by others for future research.
+
+    \item Design a feature representation for our VAD system that is amenable
+        to a high classification accuracy.
+
     \item Work to develop own algorithm based on machine learning techniques,
-          using common features from literature
-    \item Build a hangover system which smooths transition from voice to 
-          non-voice classes
+        using common features from literature
+
+    \item To, where necessary, optimise the implementation to ensure that it
+        can train in an acceptable amount of time, and classify audio in real
+        time or faster.
+
 \end{enumerate}
 
 
@@ -391,59 +410,66 @@ The basic problem any voice activity detector is trying to solve is the
 question of whether or not a particular frame of audio does or does not contain
 speech.
 
-In nearly all recording environments there is continuous background
-noise and, when there is speech, the microphone picks up speaking on top of
-that. Thusly the output of a VAD system is a single bit (1 or 0 for voice or
-noise). In a VAD system we take input from the microphone and then attempt to
-determine which of two input classes we are in, corresponding to whether we
+In nearly all recording environments there is continuous background noise and,
+when there is speech, the microphone picks up speaking on top of that. Thusly
+the output of a VAD system is a single bit (1 or 0 for voice or any other noise
+detected). In a VAD system we take input from the microphone and then attempt
+to determine which of two classes we are in, corresponding to whether we
 should or should not transmit the audio further. We formulate this as a
-decision as follows:
+decision as is shown in \ref{eqn:decision 1}.
 
 \begin{figure}
-\[ decision = \left\{ \begin{array}{ll}
-            1 & \mbox{if input like $n + v$: speech present}\\
-    0 & \mbox{if input like $n$: no speech present}.\end{array} \right. \]
-            \label{eqn:decision 1}
-            \caption{Decision model for most voice activity detectors}
-        \end{figure}
+        \[ decision = \left\{ \begin{array}{ll}
+                    1 & \mbox{if input like $n + v$: speech present}\\
+            0 & \mbox{if input like $n$: no speech present}.\end{array} \right. \]
 
-Where $n$ represents the presence of background noise and $v$ represents the
-presence of conversational speech. This is referred to as additive
-noise\cite{sohn} and generally represents a very realistic model of most
-environments in which human speech must be differentiated from background noise.
 
-In this project our problem space is slightly different, in that not only do we
-have to deal with background noise but we also have to deal with the fact that
-keyboard noise is picked up by microphones. This noise is in no way constant:
-whilst most people type with a rhythm there are distinct impulses and times
-when the amplitude from this noise is very low. In addition to this we may have
-to deal with the case where someone is typing and talking at the same time. This
-means that our decision model may look something like:
+                    Where $n$ represents the presence of background noise and $v$ represents the
+                    presence of conversational speech. This is referred to as additive
+                    noise\cite{sohn} and generally represents a very realistic model of most
+                    environments in which human speech must be differentiated from background noise.
+
+                    \label{eqn:decision 1}
+                    \caption{Decision model for most voice activity detectors}
+
+\end{figure}
+
+
+In this project our problem definition is slightly different: we do not only
+deal with background noise, we also deal with the fact that keyboard noise is
+picked up by microphones. This noise is in no way stationary: while most people
+do type with some rhythm, it is not entirely periodic. Additionally the noise
+can vary with speed of impact and many other factors. Additionally we have
+to deal with the case where someone is typing and talking at the same time.
+The decision we have tried to model is stated in \ref{eqn:decision 2}
 
 \begin{figure}
 \[ decision = \left\{ \begin{array}{ll}
             1 & \mbox{if input like $n + k + v$: speech present}\\
             0 & \mbox{if input like $n + k$: no speech present}\\
+
     \end{array} \right. \]
-            \label{eqn:decision 1}
+            \label{eqn:decision 2}
+            Where $k$ represents the keyboard noise component of the input.
             \caption{Decision model for our voice activity detector}
 \end{figure}
 
-Where $k$ represents the keyboard noise component of the input. This problem is
-different as mentioned above, due to the highly non-static nature of keyboard
-noise. It is worth noting that this model is still entirely additive, this
-model is reasonable because the sources of noise should not destructively
-interfere with each other. It is, however, worth noting that the phenomenon of
-clipping, the decibel level of the sound sources the microphone can pick up
-adding to go above it's input limit, can occur and in this case the additive
-models may break down in chapter \ref{chap:evaluation} we investigate
-how important these effects are.
+This problem definition is different to the classical VAD problem, for the
+reasons specified above. This is due to the highly non-stationary nature of
+keyboard noise. It is worth noting that this model is still entirely additive.
+This model is used in many of the papers we have referenced. We believe that
+this model accurately reflects our problem as the sources of noise should not
+destructively interfere with each other. It is, however, worth noting that an
+additive model does not take into account the phenomenon of clipping. Clipping
+can occur when the input level to the microphone exceeds it's limit. In this
+case the additive model breaks down, we did not encounter clipping in our
+experiments.
 
 Nearly every existing voice activity detector makes the assumption that
-background noise is continuous, if irregular in volume and frequency, and
-attempts to distinguish voice from the background noise. More commonly than not
-we have found that these detectors merely identify any sound that is not part
-of the continuous background noise, giving real scope to our project.
+background noise is continuous, if irregular in volume and frequency. These
+systems attempt to distinguish voice from the background noise. More commonly
+than not we have found that these detectors merely identify any sound that is
+not part of the continuous background noise, giving real scope to our project.
 Specifically identifying sudden impulses of sound from the background, and
 determining whether or not they are someone speaking or someone typing is the
 main aim of our system.
@@ -456,23 +482,26 @@ on your throat/lower chin and then make a "sssssssss" sound (unvoiced) followed
 by a "zzzzzzzzzzzz" sound (voiced). In the first example one cannot feel any
 vibration, however in the second example one feels ones throat vibrating.
 Voiced and unvoiced speech have somewhat different characteristics and this
-must be taking account of when building a VAD system.
+must be taking account of when building a VAD system\cite{atal}.
 
-When speaking voice typically has it's fundamental frequency in the 75-150HZ
-range for men and the 150-300HZ range for women. However, the human voice when
-speaking also has a rich harmonic content meaning that there are a number of
-other frequency peaks. The voice band, the band used for transmission of speech
-lies in the 300HZ to 3400HZ range. Whilst this may seem that it would cut off
-the sound of voice. This is not the case as enough of the harmonics of speech
-still make it through, and the listener will get the impression that they are
+The fundamental frequency of human speech is in the 75-150HZ range for men and
+the 150-300HZ range for women\cite{Traunmüller}. However, human speech also
+contains many harmonics, this means that there are a number of other frequency
+peaks in recordings of human speech. The voice band, the band used for
+transmission of speech lies in the 300HZ to 3400HZ range. Some think that this
+frequency range might cut off the sound of speech, due to starting above the
+fundamental. Enough of the harmonics are included in this band that much of the
+fidelity is not lost. The listener will get the impression that they are
 actually hearing the missing fundamental tone.
 
-The harmonics of the fundamental are integer multiples in frequency of the
-original note, demonstrated by figure \ref{img:harmonics}, we see that the
-first harmonic is the wave with a base frequency, the second is with twice that
-frequency and so on. Due to the complex physics of how our bodies force air through
-our throats we get a large frequency response not only at the fundamental notes
-of voice, but also at the first few harmonics of the fundamental.
+To explain the harmonic content of voice is it necessary to understand how
+harmonics of a fundamental note work. The harmonics of the fundamental are
+integer multiples in frequency of the original note, demonstrated in figure
+\ref{img:harmonics}. We see that the first harmonic is the wave with a base
+frequency, the second harmonic is with twice that frequency and so on. Due to
+the complex physics of how our bodies force air through our throats we get a
+large frequency response not only at the fundamental notes of voice, but also
+at the first few harmonics of the fundamental.
 
 We can see that a section of voice features strong harmonics of the fundamental
 in figure \ref{img:spectrogram} a spectrogram, showing the frequency strength
@@ -481,26 +510,34 @@ strong fundamental at 600HZ with strong harmonics at 1800HZ (3rd harmonic) and
 2400HZ (4th harmonic).
 
 \begin{figure}
+    \center{
     \includegraphics[height=10cm]{harmonics.png}
+}
     \label{img:harmonics}
+    \caption{A demonstration of the harmonics of a fundamental frequency}
 \end{figure}
 
 \begin{figure}
+    \center{
     \includegraphics[height=10cm]{voder_spectrogram.jpg}
+}
     \label{img:spectrogram}
+    \caption{Spectrogram of voice harmonics with speech}
 \end{figure}
 
 \section{Existing Voice Activity Detection Techniques}
 
 Existing voice activity detection techniques fall into one of two categories.
-Either the algorithms contain a number of parameters, and each parameter is
-given a threshold (the noise/voice threshold). A decision is made based on the
-thresholds over all the parameters as to whether transmission should or should
-not occur. In some systems the thresholds are static with the thresholds
-determined experimentally over some training data\cite{haigh}. These systems,
-by their design have trouble dealing with background noise that changes such as
-computer fans spinning up/down, or a person using a mobile phone walking through
-streets with different activities happening in the background
+The algorithms are either threshold based, or use machine learning techniques.
+Threshold based algorithms use a number of parameters, from the audio being
+transmitted. Each parameter is given a threshold (the noise/voice threshold). A
+decision over all the parameters is made, using the thresholds, as to whether
+the audio is or is not voice. In some systems the thresholds are static with
+the thresholds determined experimentally over some training data\cite{haigh}.
+These systems, by their design have trouble dealing with background noise that
+changes such as computer fans spinning up/down, or a person using a mobile
+phone walking through streets with different environmental noises in the
+background.
 
 In other threshold based voice activity detection systems the thresholds are
 adaptive\cite{gokhun}. These systems are designed to deal with non-stationary
