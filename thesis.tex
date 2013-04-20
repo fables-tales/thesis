@@ -2260,21 +2260,21 @@ data to train against the system would be ready to handle unseen speakers.
 The next question that is important to answer is as to whether the classifier
 that we have built is robust to unseen data from seen speakers. If this is the
 case one could imagine an automated training scenario whereby the system trains
-itself on, for example, the user using a push to talk key to indicate when they
-are speaking. This way the system can build samples in the voice class from some
-user interaction with the user. After the end of the training period, however,
-the system must continue to be robust against the user speaking differently.
+itself, on the user using a push to talk key to indicate when they are
+speaking. This way the system can build samples in the voice class from the
+user interaction. After the end of the training period, however,
+the system must continue to be robust against unseen speech from the same user.
 
 For this experiment we used approximately 10 seconds of audio from our sample
-data set, on a speaker that the system had already been trained against. This
-data was otherwise unseen, and contained some frames where the speaker was
+data set, with a speaker that the system had already been trained against. This
+data was otherwise unseen, it contained some frames where the speaker was
 typing and speaking at the same time. Within this sample 222 frames were not
-total silence, and the sample contained a short, low volume,  utterance before
-the start of speech, which was picked up by the system and largely transmitted.
-The main body of the talking was transmitted and only pauses were classified as
-noise. The tail of the speech was also largely transmitted, with background
-noise being detected accurately. The classification diagram can be seen in
-\ref{fig:ultimation}.
+total silence. The sample contained a short, low volume, utterance before the
+start of speech. This utterance was picked up by the system and largely
+transmitted. The main body of the talking was transmitted and only pauses were
+classified as noise. The tail of the speech was also largely transmitted, with
+background noise being detected accurately. The classification diagram can be
+seen in \ref{fig:ultimation}.
 
 \begin{figure}
     \label{fig:ultimation}
@@ -2283,30 +2283,28 @@ noise being detected accurately. The classification diagram can be seen in
 \end{figure}
 
 This shows us that firstly, we have built a system that is relatively robust to
-speakers that it has been seen before, regardless of the fact that we haven't
-seen the specific speech data before. This is encouraging because it indicates
-that this system will work in future cases where the speaker has been seen
-before.  More importantly this indicates that the classifier has a very high
-level of sensitivity as it accurately classified the two pauses within the
-overall speech.
+speakers that it has been seen before. Despite the fact that we haven't seen
+the specific speech data before. This is encouraging because it indicates that
+this system will work where the speaker has been seen before. More importantly,
+this indicates that the classifier has a very high level of sensitivity as it
+accurately classified the two pauses within the overall speech.
 
 A possible problem that is brought up by this is that very quiet utterances
-flick back and forth between the background noise and speech class: this could
+flick back and forth between the background noise and speech class. This could
 be annoying if it repeatedly happens and brings to bear the idea of a smoothing
-system/long term classifier that uses more information from the long term
-context of speech instead of only the short term context which is what the
-classifier system that we have built provides.
+system/long term classifier. The long term classifier would use more
+information from the long term context of speech. This is in contrast to our
+system which only uses the short term context of a single 16ms window.
 
 \section{Use of different classification algorithms}
 
 The choice to use the Random Forest classification algorithm was very much a
-decision made based on the author's experience, and in this section we aim to
-see whether any of the other classification techniques mentioned in the
-technical background section prove to give a better classification rate on the
-data set. Whilst the features were very much generated with a random forest in
-mind, in the implementation chapter, we showed that the features themselves
-give relatively independant views on the data set, with low correlation between
-most of the features.
+decision made based on the author's experience. In this section we aim to see
+whether any of the other classification techniques mentioned in the technical
+background section prove to give a better classification rate on the data set.
+Whilst the features were very much generated with a random forest in mind, we
+have shown that the features themselves give relatively independent views on
+the data set.
 
 With this in mind, we decided to use all of the ensemble methods discussed
 earlier, a simple decision tree algorithm and the k nearest neighbor method.
@@ -2315,9 +2313,9 @@ hopefully reveal as to whether or not our decision to use the Random Forest
 classifier was a correct one. For all classifiers we have reported the ROC
 curves in \ref{fig:multiclass-roc}, the confusion matrices in
 \ref{fig:multiclass-confusion} and the training and test times in
-\ref{fig:multiclass-speed}. This experiment was performed by training the
-classifiers on half of the data that we have available and using the other half
-as unseen testing examples.
+\ref{fig:multiclass-speed} (todo report times). This experiment was performed
+by training the classifiers on half of the data that we have available and
+using the other half as unseen testing examples.
 
 \begin{figure}
     \label{fig:multiclass-roc}
@@ -2377,25 +2375,25 @@ as unseen testing examples.
 
 \end{figure}
 
-The reason this experiment is important is that if we can acheive a better
+The reason this experiment is important is that if we can achieve a better
 classification accuracy, or classification performance in time/memory with any
 of these systems, then it is worth noting. The first thing we note is that the
-Random Forest (Decision Forest) gives the best classification rate by some
-measure, followed by the Gradient Boosted regression tree algorithm. This does
-not contravene expectations as these methods both use a large ensemble of
-classifiers (specifically 100 trees were trained for both).
+Random Forest gives the best classification rate by some measure, followed by
+the Gradient Boosted Regression Trees algorithm. This does not contravene
+expectations as these methods both use a large ensemble of classifiers.
+Specifically for both classifiers we trained 100 trees.
 
-What is more interesting is perhaps that the decision tree classifier acheives
-a higher raw classification accuracy than all the algorithms but the decision
-forest but has a lower area under the ROC curve. This is because the classifier
-implementation that we used for the Decision Tree does not provide output
-probabilites but rather a ${0,1}$ discrete classifiation. This means that it's
-potentially more accurate classification suffers under the ROC curve metric
-because it must be linearly interpolated to the (0,0) and (1,1) points from
-it's actual classification output. By comparison we can see that this metric
-favours the lower accuracy five nearest and three nearest neighbor classifiers
-because they return continuous predictions instead of discrete output and
-therefore give are given a more favourable result in the ROC AUC metric.
+What is more interesting is perhaps that the decision tree classifier achieves
+a higher raw classification accuracy than all the algorithms, apart from the
+decision forest, but the decision tree algorithm has a lower area under the ROC
+curve. This is because the classifier implementation that we used for the
+Decision Tree does not provide output probabilities but rather a ${0,1}$
+discrete classification. This means that its potentially more accurate
+classification suffers under the ROC curve metric. This is because it must be
+linearly interpolated to the (0,0) and (1,1) points from its actual
+classification output. By comparison we can see that this metric favours the
+lower accuracy five nearest and three nearest neighbor classifiers because they
+return continuous predictions instead of discrete output.
 
 However, if we look at the confusion matrices of these 4 classifiers we can see
 that that the decision tree actually gives a much better overall classification
