@@ -545,47 +545,49 @@ background noise, that is background noise that changes in amplitude and pitch.
 These systems usually start with an initial guess of their class thresholds
 which then change over time. The thresholds change based on the running average
 of each of the parameter values for the two classes, as output by the
-detector\cite{sakhnov}
+detector\cite{sakhnov}.
 
 The other major class of voice activity detectors apply machine learning
 algorithms to build a complex classification boundary over the parameters of
-the model\cite{shin}. These classifiers do suffer from the problem of having a static
-decision boundary, due to the fact that on-line training is not possible
-without hand labelling. This, however, usually does not cause too much of an
-issue due to the fact that the more complex decision boundary achieves a much
-higher accuracy when trying to decide between the voice and non-voice class.
+the model\cite{shin}. These classifiers can suffer from the problem of having a
+static decision boundary. This static decision boundary is due to the fact that
+on-line training is not possible. This is usually not an issue due to the fact
+that the more complex decision boundary achieves a much higher accuracy when
+trying to decide between the voice and non-voice class.
 
 \subsection {Features}
 
 In both threshold based and machine learning based VAD systems a number of
-features are extracted from the raw audio in order to give it a representation
-that is amenable to distinguishing frames of audio that contain background
-noise from those that contain speech. In this section we investigate existing
-features that are used in models for voice activity detection, including those
-that were and were not used in our model.
+features are extracted from the raw audio. These features are used to build a
+representation of the audio that can: be used in the decision systems and is
+likely to easily distinguish speech from non-speech. In this section we
+investigate existing features that are used in models for voice activity
+detection, including those that were and were not used in our model.
 
 \subsubsection{Commonly used features}
 
-When building our own classification system it is important to find the
-features that are already being used to build VAD systems, such that they can
-be used in our system, in combination with the classifier discussed in section
-TODO ADD A REFERENCE SRSLY. Whilst our problem is slightly different in that we
-have extremely non-stationary background noise, these features may be useful to
-build an accurate VAD system. This also serves as the explanation for when
-these features are referred to later on in this paper.
+In this section we investigate some of the features that are commonly found in
+other VAD systems. The motivation for this is to find features that can be used
+in our classifier to give a good representation for the classifier to be
+trained against. Our problem definition is, admittedly, slightly different to
+the common VAD case. Specifically we have extremely non-stationary background
+noise. Features from other systems may be useful in building our VAD system.
+This section also serves to define how features are constructed for when these
+features are referred to later on in this paper.
 
 One of the most commonly used features in voice activity detection is the
-energy of a frame. Given in figure \ref{eqn:energy} (sometimes also implemented
-as the root mean square of a window), this feature is used in
+energy of a window. The equation for energy is given in figure
+\ref{eqn:energy}\footnote{ sometimes also implemented as the root mean square
+of a window}, this feature is used in
 \cite{shin}\cite{sakhnov}\cite{gokhun}\cite{haigh}\cite{atal} and \cite{sohn2}.
 The energy feature of a particular window of audio has been found to be
 significantly higher in frames that contain speech than background
-noise\cite{atal}. However, this parameter also forms different distributions
-for voice and unvoiced speech, with the energy value for voiced speech being
-significantly higher than that for unvoiced speech. In \cite{atal} they state "
-The energy of un-voiced sounds is usually lower than for voiced sounds, but
-often higher than for silence." The system they used was a threshold based one,
-however in \cite{shin} this feature was used as part of a decision tree system.
+noise\cite{atal}. This parameter also forms different distributions for voiced
+and unvoiced speech. The energy values for voiced speech is typically
+significantly higher than those for unvoiced speech. In \cite{atal} they state
+"The energy of unvoiced sounds is usually lower than for voiced sounds, but
+often higher than for silence." The system they used was a threshold based system,
+in \cite{shin} this feature was used as part of a machine learning based system.
 They reported "The full band energy, the conventional feature for endpoint
 detection for clean speech, does not work well for noisy speech." The feature
 did, however, give roughly 88\% accuracy figure by itself when used in their
@@ -602,26 +604,33 @@ Another commonly used feature in voice activity detection is the zero crossing
 rate of a window. The definition for this feature is given in figure
 \ref{eqn:zero-crossing-rate}. This feature is not used in \cite{shin}, but is
 used in \cite{atal}. In \cite{atal} it is stated that zero crossing rate varies
-consistently with energy. This is very important for a classifier based system
-like the one that we are building because features that correlate with each
-other weakly are likely to give different statistical "views" on the data that
-machine learning algorithms can extract much of variance from in order to give
-a more accurate classification. In \cite{shin} they state that zero-crossing
-does not perform well in noisy speech, they did not use this parameter at all
-and did not make any actual reports on the accuracy of the feature. In
-\cite{haigh} they found that a detector based on energy and zero-crossing rate
-only failed in noisy conditions. This feature was also used in our detector.
+consistently with energy. For the classifier based system that we are building,
+it is very important to find features that vary from each other. The reason for
+this is that if the features have low correlation they are very likely to give
+"statistically independent" views on the data. When this happens the classifier
+is able to take advantage of these statistically independent views to give a
+significantly higher classification accuracy. In \cite{shin} they state that
+zero-crossing does not perform well in noisy speech, they did not use this
+parameter at all and did not make any actual reports on the accuracy of the
+feature. In \cite{haigh} they found that a detector based on energy and
+zero-crossing rate only failed in noisy conditions. This feature was also used
+in our detector.
 
-\begin{figure} $$ZeroCrossingRate(x) =
-    \sum_{i=1}^{length(x)}abs(sign(x(i-1))-sign(x(i)))$$ \label{eqn:zero-crossing-rate}
-    \caption{Energy of a window x, where length(x) gives the number of
-    individual samples in x, abs is the absolute value of a number, and sign
-gives the sign of the number 1, 0, or -1 for positive, zero or negative numbers
-respectively} \end{figure}
+\begin{figure}
+
+    $$ZeroCrossingRate(x) =
+    \sum_{i=1}^{length(x)}abs(sign(x(i-1))-sign(x(i)))$$
+
+    \label{eqn:zero-crossing-rate}
+
+    Where x is the signal, sign gives the sign (-1, 0 or 1) of a value and
+    abs gives the absolute value of a value.
+
+    \caption{Zero crossing rate of a frame} \end{figure}
 
 \subsubsection{Other features from existing systems}
 
-There are anumber of other features that were used in the system we built that
+There are a number of other features that were used in the system we built that
 came from existing implementations of voice activity detection. We here explain
 these features so that the reader is aware of how the feature values are
 calculated.
@@ -629,76 +638,80 @@ calculated.
 Another feature that is used in \cite{shin} is referred to as a "band energy".
 This simply takes the energy as specified in \ref{eqn:energy} but instead of
 computing it over the entire window, it is taken over the amplitude component
-of a fourier transform that has had a band pass applied to it, with the
-frequency band specified. For example the 300-3700HZ band energy that Shin et
-al refer to (which corresponds to the audible range of a telephone system) is
-computed by taking the sum of squared amplitudes of the components of the
-amplitude domain of a fourier transform that lie within the 300-3700HZ
-frequency range. In our system we used multiple band energies as discussed in
-chapter \ref{chap:execution}.
+of a Fourier transform that has had a band pass applied to it, with the
+frequency band specified.  An example of this is the 300-3700HZ\footnote{This
+range corresponds to the audible range of the telephone system} band energy
+that Shin et al refer to. This band energy is computed by taking the sum of
+squared amplitude values of the components of a Fourier transform that lie
+within the 300-3700HZ frequency range. In our system we used multiple band
+energies which are discussed in chapter \ref{chap:execution}.
 
-In \cite{haigh} they used ceptral features for voice activity detection. There
+In \cite{haigh} they used cepstral features for voice activity detection. There
 are multiple transforms that are referred to as the "cepstrum" of a signal,
 specifically the complex cepstrum, the power cepstrum and the phase
 cepstrum\cite{childers}. The power cepstrum is defined in
-\ref{eqn:power-cepstrum}. This feature is primarily used in speech recongition,
+\ref{eqn:power-cepstrum}. This feature is primarily used in speech recognition,
 the higher order task of determining what words are being said, rather than
-voice detection\cite{muda} and in \cite{atal} they criticize this approach for
+voice detection\cite{muda}. In \cite{atal} they criticize this approach for
 VAD, stating that this feature requires a very high degree of periodicity
-(singal approximately repeats itself with a fixed period) to provided an
+(signal approximately repeats itself with a fixed period) to provide an
 accurate classification.
 
 \begin{figure}
-    $PowerCepstrum(f)=\mathcal{F}^{-1}\{\mbox{log}(\mathcal{F}\{ f(t) \}|^2)\}|^2$
+    $$PowerCepstrum(f)=\mathcal{F}^{-1}\{\mbox{log}(\mathcal{F}\{ f(t) \}|^2)\}|^2$$
     \caption{Definition of a power cepstrum. $f$ is our
-    signal function, $\mathcal{F}$ is the fourier transform function. $|a|$}
+    signal function, $\mathcal{F}$ is the Fourier transform function. $|a|$}
     \label{eqn:power-cepstrum}
 
 \end{figure}
 
-Specifically in \cite{haigh} they use a cepstral distance measure defined as
-the euclidian distance of the power cepstrums between the data they were
-attempting to classify and a pre-defined 'code-book' of samples, selecting the
-class of whichever example in the 'code-book' had the lowest euclidian
-distance. This is equivalent to a single nearest neighbor classification. An
-accuracy figure is not given however they were able to design the threshold of
-their system such that it tripped at a very low voice likelyhood ratio (0.01) with
-relatively low error.
+Specifically in \cite{haigh} they use a cepstral distance measure,
+\footnote{Euclidian distance} between testing samples and a training set of
+samples. The classification was given as the class of the sample in the
+training set which was nearest to the sample being classified. This is
+equivalent to a single nearest neighbor classifier. They did not report an
+accuracy figure, however they did include a diagram which shows that their
+classifier was configured to be particularly sensitive. This probably means
+that they were able to get an accurate classification in stationary background
+noise. This approach would probably not work for our problem class.
 
 In \cite{moattar} one of the key features that they extracted was the dominant
 frequency component of the signal. This corresponds to the highest peak in the
-fourier transform of the signal and is defined in \ref{eqn:dom-freq}. The
+Fourier transform of the signal and is defined in \ref{eqn:dom-freq}. The
 authors of the paper observed that this feature was helpful in discriminating
 speech and silence frames. We observed problems with this feature due to the
 nature of our windowing system which are discussed in \ref{chap:execution}. The
 accuracy of this feature is reported in \cite{moattar} to have a greater than
-80\% accuracy under even noisy conditions. However the caveat to this feature
-for our project does apply that our noise is highly irregular and most
-definitely not of stationary amplitude.
+80\% accuracy under even noisy conditions. The main caveat that they point out
+with this feature, that the background noise must be in someway regular, does
+not apply to our project. Our noise is highly irregular and is almost certainly
+not of stationary amplitude.
 
 \begin{figure}
-    $DominantComponent(f) = argmax_i(|\mathcal{F}(f(t))|)$
-    \caption{Definition of the dominant component of a signal. $f$ is the singal
-        function, $\mathcal{F}$ is the fourier transform. $argmax$ gives us the
-        input corresponding to the maximum output of a function.}
+    $$DominantComponent(f) = argmax_i(|\mathcal{F}(f(t))|)$$
+
+    $f$ is the signal
+    function, $\mathcal{F}$ is the Fourier transform. $argmax$ gives us the
+    input corresponding to the maximum output of a function.
+    \caption{Definition of the dominant component of a signal}
     \label{eqn:dom-freq}
 \end{figure}
 
 In \cite{atal} they used two features constructed via a linear predictive
 coding (LPC) analysis. The basic principle of linear predictive coding is that
 the current sample can be approximated as a linear combination of the previous
-samples\cite{rabiner}, the coding is the coefficients ($a_1,a_2,...,a_p$) that
-each of the previous samples are combined with to give the prediction of the
-coding. In \cite{atal} they specifically used a size 12 linear combination,
-which means that each sample was predicted as a linear combination of the
-previous twelve. It is important to note here that over short periods of
-10-30ms voice signals are roughly periodic, and that it is obvious that $s(n)
-\approx s(n-N_p)$ where $N_p$ is the length of the period. LPC techniques work
-with window sizes that are significantly smaller than the period and still
-accurately reconstruct the next part of the signal. The result of the LPC is a
-number of coefficients that can be used to attempt to reconstruct parts of the
-signal, however, they can also be used as parameters to both threshold and
-classifier based systems. In \cite{atal} they used two parameters from the LPC:
+samples\cite{rabiner}. One representation of the LPC is the coefficients
+($a_1,a_2,...,a_p$) that are used to generate the prediction. In \cite{atal}
+they specifically used a size 12 linear combination, which means that each
+sample was predicted as a linear combination of the previous twelve. It is
+important to note here that over short periods of 10-30ms voice signals are
+roughly periodic, and that it is obvious that $s(n) \approx s(n-N_p)$ where
+$N_p$ is the length of the period. LPC techniques work with window sizes that
+are significantly smaller than the period and still accurately reconstruct the
+next part of the signal. The result of the LPC is a number of coefficients that
+can be used to attempt to reconstruct parts of the signal. These coefficients can
+also be used as parameters to both threshold and classifier based systems. In
+\cite{atal} they used two parameters from the LPC:
 
 \begin{itemize}
 
@@ -712,8 +725,8 @@ classifier based systems. In \cite{atal} they used two parameters from the LPC:
         above as the sum of the squares of the signal in \ref{eqn:energy}. In
         the paper they state that this feature is equivalent to the ratio of
         the geometric mean of the spectrum to the arithmetic mean of the
-        spectrum.  This makes it equivalent to the spectral flatness measure
-        defined in \cite{moattar}
+        spectrum. This makes it equivalent to the spectral flatness measure
+        defined in \cite{moattar}.
 
 \end{itemize}
 
@@ -725,55 +738,61 @@ report lower accuracy rates in the literature and are very much designed to
 differentiate continuous background noise from sudden changes in any of their
 parameters. Our feeling was that this would not be amenable to differentiating
 sudden keyboard impulses from sudden voice impulses. In the execution chapter
-of this project we discuss how we built the training set and how we built the
-training set for this system, and this section specifically conducts a review
-of machine learning systems, with an explanation of state of the art machine
-learning techniques such as random forests, gradient boosted regression trees
-and adaboost with decision stumps. All classifiers here are discussed under the
+of this project we discuss how we built the classifier and training set for
+this system, and this section specifically conducts a review of machine
+learning systems, with an explanation of state of the art machine learning
+techniques such as random forests, gradient boosted regression trees and
+adaboost with decision stumps. All classifiers here are discussed under the
 assumption that they only have to deal with a binary classification problem,
 which corresponds to the classification problem that we are dealing with
 (voice/non-voice classification).
 
 \begin{figure}
-    $Train:R^x \times R^y, \{0,1\}^y \rightarrow ModelFunction$
+    $$Train:R^x \times R^y, \{0,1\}^y \rightarrow ModelFunction$$
 
-    \caption{Definition of a training function: x is the number of features and
-        y is the number of classes. The function takes an x by y matrix of
-        reals and a y-length vector of labels and ouptuts a model function that
-        behaves as a classification function defined in in
-    \ref{eqn:define-classify} }
+    y is the number of classes. The function takes an x by y matrix of reals
+    and a y-length vector of labels and ouptuts a model function that behaves
+    as a classification function defined in in \ref{eqn:define-classify}
+
+    \caption{Definition of a training function} x is the number of features and
 
     \label{eqn:define-train}
 \end{figure}
 
 \begin{figure}
-    $Classify: R^x \rightarrow \{0,1\}$
-    \caption{Definition of a trained model/classification function: x is the
-        number of features, the model takes a feature vector and outputs a class,
-    in some implementations this may be a probability}
+    $$Classify: R^x \rightarrow \{0,1\}$$
+
+    x is the number of features, the model takes a feature vector and outputs a
+    class, in some implementations this may be a probability instead of a {0,1}
+    classification.
+
+    \caption{Definition of a trained model/classification function}
+
     \label{eqn:define-classify}
 \end{figure}
 
 \subsection{Classification and regression trees}
 
 Classification and regression trees are class of machine learning algorithm
-that work by first training a binary decision tree and then pushing examples to
-be classified through the binary decision tree to perform
-classification/regression. Training is performed by computing splits in the
-feature space that represent the maximum gain in information over the entire
-set of features for the examples that will reach this part of the tree. At the
-start the split that gives highest information gain over the entire data set is
-chosen, giving us two subsets of the entire data set, that are then split
-seperately from each other and so on and so on. This process continues until
-the leaf nodes of the tree contain only training examples of the same class. By
-this method we ensure that all training examples will be classified correctly,
-in general this method can lead to some overfitting that will cause the classifier
+that train a binary decision tree over the training samples. They classify by
+pushing examples through the binary decision tree. Training is performed by
+computing splits in the feature space. Typically, these splits are chosen to
+give the best possible improvement in classification rate, assuming that the
+training set is totally representative. At the start the split that gives
+highest information gain over the entire data set is chosen, giving us two
+subsets of the entire data set, these subsets are then split recursively as if
+they represented a new entire training set. This process continues until the
+leaf nodes of the tree give a classification of homogeneous class. By this
+method we ensure that all training examples will be classified correctly, in
+general this method can lead to some over-fitting that will cause the classifier
 to not generalise as well, and the trees are pruned. An example decision tree
 is shown in Figure \ref{fig:decision-tree}.
 
 \begin{figure}
 
-    \includegraphics[height=10cm]{decision_tree.png}
+    \center{
+        \includegraphics[height=10cm]{decision_tree.png}
+    }
 
     \label{fig:decision-tree}
     \caption{An example decision tree kindly provided by Wikipedia}
@@ -781,36 +800,39 @@ is shown in Figure \ref{fig:decision-tree}.
 
 Regression trees are used when the output is not a single class but instead
 some single real number. For example a regression tree might be used in an
-attempt to predict the length of a patients stay in hospital. In \cite{shin}
+attempt to predict the length of a patient's stay in hospital. In \cite{shin}
 individual features were passed through a speech/non-speech classification, and
 then a CART (classification and regression tree) was employed over the outputs
 of the pre-classifiers to come to the final decision. This approach gave a very
-high accuracy level under low and medium noise levels (-5 and 0db respectively)
-but degraded under high noise levels (5db). In order to improve the
-classification parmeters were passed in from more than one window (specifically
-the previous and next window were passed in before the decision was made).
+high accuracy level under low and medium noise levels (-5dB and 0dB
+respectively) but degraded under high noise levels (5dB). In this system they
+further improved their classification accuracy by passing in: the current window
+to be classified, the previous window that had already been classified and the
+next window to be classified.
 
 \subsection{Decision Stump}
 
 Whilst never used on its own the decision stump classifier is worth exploring
-due to it's use in ensemble\footnote{Ensemble classification methods are a
-    large class of classification algorithm that combine many classifiers in an
-    attempt to improve classification accuracy or generalizability or both. In
-chapter \ref{chap:evaluation} we show that these methods give much better
-accuracy in cross validation than non-ensemble techniques over our data set
-with some intuition for why this is the case.} classification methods.
-Specifically the decision stump classifier acts like a normal binary decision
-tree classifier or CART but instead of training until completion it is trained
-for only one split. These often acheive very low classifcation accuracy
-(usually just barely better than a random classifier) and are sometimes
-referred to as "weak" or "base" classifiers. In the famous Viola Jones face
-detector\cite{viola} many decision stumps were used to form a strong classifier
-that achieves very good classification accuracy. An example decision stump is
-shown in Figure \ref{fig:decision-stump}.
+due to its use in ensemble\footnote{Ensemble classification methods are a class
+    of classification algorithm that combine many classifiers in an attempt to
+    improve classification accuracy or generalizability or both. In chapter
+\ref{chap:evaluation} we show that these methods give much better accuracy than
+non-ensemble techniques with some intuition for why this is the case.}
+classification methods. Specifically the decision stump classifier acts like a
+normal binary decision tree classifier or CART. Instead of training recursively
+with many splits, it is trained for only one split. These often achieve very
+low classification accuracy and are sometimes referred to as "weak" or "base"
+classifiers. In the famous Viola Jones face detector\cite{viola} many decision
+stumps were used to form a strong classifier that achieves very good
+classification accuracy. An example decision stump is shown in Figure
+\ref{fig:decision-stump}.
 
 \begin{figure}
 
+    \center{
     \includegraphics[width=5cm]{decision_stump.png}
+}
+
 
     \label{fig:decision-stump}
     \caption{An example decision stump kindly provided by Wikipedia}
@@ -818,19 +840,21 @@ shown in Figure \ref{fig:decision-stump}.
 
 \subsection{Adaboost}
 
-Adaboost is a well known algorithm for ensemble classification that achieves
-a high classification accuracy by training many classifiers. Unlike some of
-the other ensemble methods we discuss in this paper the Adaboost method can
-be used with any base classifier, and as such may be amenable to a larger set
-of problems than other ensemble methods presented here. Specifically the result
-of the Adaboost training is a chain of classifiers which become increasingly
-biased towards the most difficult samples to accurately classify within the
-training set.
+Adaboost is a well known algorithm for ensemble classification that achieves a
+high classification accuracy by training many base classifiers. Unlike some of
+the other ensemble methods that we discuss in this paper the Adaboost method
+can be used with any base classifier. Due to this it may be useful in a larger
+set of problems than other ensemble methods presented here. Specifically, the
+result of training an Adaboost classifier is a chain of classifiers. The later
+classifiers in the chain tend to be more biased towards the most difficult
+samples to classify within the training set.
 
 The final classification output of the Adaboost algorithm is given as a linear
-combination of weights multiplied by the classification output (usually a
-posterior probability) of each of the individual classifiers within the Adaboost
-classifier. The pseudocode for training the system is given in \ref{pseudo:adaboost}.
+combination of weights multiplied by the classification output\footnote{The
+    classification output of the classifiers within the Adaboost chain is
+usually either an integer class or a real posterior probability} of each of
+the individual classifiers within the Adaboost classifier. The pseudocode
+for training the system is given in \ref{pseudo:adaboost}.
 
 Within this paper we use an Adaboost algorithm that uses decision stumps as its
 base classifier, this decision was made based on the fact that we wanted
@@ -840,14 +864,14 @@ domains\cite{viola}.
 
 It is worth noting that training an Adaboost classifier with a very large
 number of weak classifiers can cause a high level of overfitting, especially
-in the presence of noise within the data set.
+in the presence of noise within the data set TODO: add citation here.
 
 \begin{figure}
-    Psuedocode for training an adaboost classification system. It is important
+    Pseudocode for training an Adaboost classification system. It is important
     to note that the weak classifiers must be sensitive to the weights given in
     the $w$ array. If the classification system that is used is not sensitive
     to these weights (for example a decision tree by default has no concept of
-    weighting it's inputs) we can weight the samples by performing a roulette
+    weighting its inputs) we can weight the samples by performing a roulette
     wheel selection\footnotemark on the samples.
 
     \vspace{3em}
@@ -876,7 +900,7 @@ in the presence of noise within the data set.
     In step 2a in the previous listing we specifically pick the weak classifier
     that gives the lowest weighted prediction error over all the samples, where
     the weighted prediction error is defined as: $$error_{h_i} =
-    \sum_{k=0}^{N_{samples}} w(k)(y_k\neq h_i(x_k))$$. By doing this at each
+    \sum_{k=0}^{N_{samples}} w(k)(y_k\neq h_i(x_k))$$By doing this at each
     stage we are effectively picking the weak classifier that is most capable
     of dealing with the most highly weighted samples. This gives us an improved
     classification over a single classifier because the difficult samples are
@@ -906,122 +930,132 @@ array that matches the weights of the items.}
 
 The random forest classification algorithm is a modern ensemble method for
 classification proposed by Breiman in \cite{breiman}. In a random forest many
-decision trees are combined to give a much better classification result than
-any single classifier is able to. In order to arrive at a final class the
-original Breiman paper suggested that each classifier's output is taken and the
-modal class is used. In the implementation that we use in this paper we instead
-ask each tree to give a probability value that the instance is in the positive
-(voice) class and then take the mean average of these, thresholding at 0.5 to
-give the voiced/unvoiced classification. This helps to more accurately reflect
-that some trees may be very confident with an instance and give a high
-posterior probability but some may be less confident and give a probability
-closer to 0.5, the mean of these allows the end result of the classification to
-be more sensitive to the results of the individual trees.
+decision trees are combined, this give a much better classification result than
+any single decision tree is able to. In order to arrive at a final class the
+original Breiman paper suggested that the classifier's output should be the
+modal class of the classifiers in the ensemble.  In this project the
+implementation of our random forest classifier is slightly different. Each tree
+in the ensemble computes a posterior probability. Instead of giving a modal
+class output, the mean of posteriors is taken to give a more sensitive
+classification. The output is thresholded to 0.5 for the voice/non-voice
+classification. This implementation may give a more accurate classification due
+to the fact that it can take into account the relative confidences of each of
+the decision trees.
 
 The training method for a randomised forest as described in \cite{breiman} is
 to create a randomised vector from the training set by performing selection
-without replacement at random from the training set, such that any single
-instance may occur more than once, this is the same technique that is used in
-the bagging ensemble classification method. The difference between how this
-system is trained, and how bagging trains is that instead of then just training
-decision trees in the traditional way, the random forest approach builds splits
-in each tree by selecting random subsets of the possible features at each of
-the splits.
+without replacement at random from the training set. This means that any single
+instance may occur more than once in the randomised vector. This is the same
+technique that is used in the bagging ensemble classification method. In our
+system the randomisation is taken a step further, we also train each tree in
+the ensemble on a, different, randomised subset of the features of the training
+set.
 
 There is a second class of random forest used in this paper called extremely
-randomised trees. This method goes one step further in the randomness during
-training and instead of splitting on the most discriminative threshold of the
-most discriminative feature of a random subset of the features at each training
-stage the extremely randomised forest picks random thresholds of each feature
-in the random subset of features and then picks the one with the highest information
-gain.
+randomised trees. This method goes one step further in the randomisation during
+training. The extremely randomised forest algorithm does not split on the most
+discriminative threshold of the most discriminative feature of a random subset
+of the features. Instead, the extremely randomised forest picks $n$ random
+thresholds of each feature in the random subset of features and then picks the
+one with the highest information gain.
 
 In \ref{fig:comparison} we can see a comparison of decision trees, random forests,
 extremely randomised trees and Adaboost. It is worth noting that the decision
 boundaries for random forests are a lot noisier around noisy data than the
 other classification algorithms.
 
-\begin{figure} \label{fig:comparison}
-    \includegraphics[width=13cm]{classifier_comparison.png} \caption{Comparison
-        of decision trees and some ensemble classification techniques, showing
-        data points with circles and decision boundaries with background color,
-        shading in the background colour indicates probability where the
-        ensemble methods have internal classifiers that disagree. The decision
-        tree always has block color as it gives a single class as an output
-rather than a probability} \end{figure}
+\begin{figure}
+    \label{fig:comparison}
+    \center{
+        \includegraphics[width=13cm]{classifier_comparison.png}
+    }
+
+    \caption{Comparison
+    of decision trees and ensemble classification techniques}
+
+    this shows data points with circles and decision boundaries with background
+    color, shading in the background colour indicates probability where the
+    ensemble methods have internal classifiers that disagree. The decision tree
+    always has block color as it gives a single class as an output rather than
+    a probability
+
+\end{figure}
 
 \subsection{Gradient Boosted Regression Trees}
 
 The gradient boosted regression trees algorithm uses boosting to build a strong
-classifier by combining many decision trees over the input training samples.
-Like Adaboost the GBRT (Gradient Boosted Regression Trees) model takes the
-output of the overall classifier as the sum of each of the outputs of the
-individual classifiers in the ensemble multiplied by a weight. The difference
-between this technique and Adaboost is that instead of weighting samples that
-are classified incorrectly, each internal classifier is trained with the
-individual examples labelled with the residual between the actual label and
-what the current version of the classifier gives.
+classifier, it trains many decision trees over the training set.  The output of
+the GBRT (Gradient Boosted Regression Trees) is computed in a similar fashion
+to Adaboost. They both take the sum of the outputs of the classifiers in the
+ensemble, multiplied by some weight associated with each classifier. 
+
+The difference between this technique and Adaboost is in how we change the
+treatment of samples in each iteration. In Adaboost more difficult samples are
+given a higher weight. In GBRT we change the class label on each sample to be
+the residual between the original class label and what the current ensemble
+classifier outputs for that sample.
 
 The main disadvantage of GBRT in comparison to the Random Forest technique is
-that the training process cannot be easily parallelized, due to the fact that
-each new tree must be trained as a function of the ensemble classifier as it
-has been trained thus far.
+that the training process cannot be easily parallelized. This is due to the
+fact that each new tree must be trained as a function of the ensemble
+classifier that has been trained thus far.
 
 In \cite{parker} they use GBRT to perform sequence alignment of music, this
-technique was also used by the winning submission to the netflix prize.
+technique was also used by the winning submission to the Netflix prize.
 
 \subsection{A review of ensemble techniques}
 
-The ensemble techniques that we have discussed sofar all have been shown to
+The ensemble techniques that we have discussed so far all have been shown to
 perform significantly better in generic machine learning applications than
-single classifiers this is because they build a number of different models in
-various ways, each of which has either a randomised component, or is reliant on
-moving against the error of other models within the ensemble. These techniques,
-do, however come with a high performance overhead, due to the fact that there
-are many classifiers instead of one. Adaboost with decision stumps does
-somewhat serve as an exception to this rule because decision stumps take
-virtually no time to perform a classification. In this paper we consider
-decision trees, random forests, gradient boosted regression trees and Adaboost,
-comparing the feature set that we developed in an attempt to maximise accuracy
-and generalizability.
+single classifiers. This is because they build a number of different models,
+with either a randomised component, or a dependency on moving against the error
+of the ensemble. These techniques however come with a high processing
+performance overhead. This is simply due to the fact that there are many
+classifiers instead of one. Adaboost with decision stumps does somewhat serve
+as an exception to this rule because decision stumps take virtually no time to
+perform a classification. In this paper we consider decision trees, random
+forests, gradient boosted regression trees and Adaboost, comparing the feature
+set that we developed in an attempt to maximise accuracy and generalizability.
+Classification performance  served as a secondary concern because many of the
+performance problems in our system were not in the classification layer.
 
 \section{ROC Curves}
 
 A ROC curve, or Receiver Operating Characteristic curve, is a curve that is
 used for evaluating the accuracy of a classifier by comparing the false
 positive and true positive rate. The area under the ROC curve can also be used
-as a measure of the accuracy of the classifier. In a 2 class problem, a
-completely random classifier will strike a line of tpr = fpr at all points.
-This is because it makes no decision. Better classifiers tend to move towards
-better true positive rates and lower false positive rates, meaning that they
-typically occupy the upper left half of the ROC curve. An example of this can
-be seen in \ref{fig:roc-example}.
+as a measure of the accuracy of the classifier. In a 2 class problem a
+completely random classifier will strike a line between (0,0) and (1,1). Better
+classifiers tend to move towards better true positive rates and lower false
+positive rates and typically occupy the upper left half of the ROC curve. An
+example of this can be seen in \ref{fig:roc-example}. Note how several
+thresholds are pointed out on the curve.
 
-Note how several thresholds are pointed out on the curve. The reason for this
-is that most classifiers do not output a binary class decision, but rather a
-posterior probability or some other likelyhood that the example belongs to a
-specific class. By thresholding the decision boundary, we can affect both the
-true positive and false positive rate: this is particularly important in
-classifiers that aren't merely going for raw maximum classification accuracy,
-but rather care about a decision one way or the other. For example in our
-classification problem it would be disasterous if some voice were not
-transmitted when the user was speaking, so our system will naturally fall to
-the lax threshold rather than the strict threshold.
+The reason for these thresholds is that most classifiers do not output a binary
+class decision. They give a posterior probability or some other likelihood that
+the example belongs to a specific class. By thresholding the decision boundary,
+we can affect both the true positive and false positive rate. This is
+particularly important in classifiers that aren't merely going for raw maximum
+classification accuracy, but rather care about a decision one way or the other.
+For example in our classification problem it would be disastrous if some voice
+were not transmitted when the user was speaking, so our system will naturally
+fall to the lax threshold rather than the strict threshold.
 
 \begin{figure}
     \label{fig:roc-example}
     \begin{center}
         \includegraphics[height=10cm]{roc_example.png}
     \end{center}
+    \caption{An example ROC curve}
 \end{figure}
 
 The area under the ROC curve is a measure of the predictive power of the
 classifier\cite{fawcett}. No classifier used in the real world will have an
 area under the ROC curve of less than 0.5, as random guessing will always
 produce a diagonal line between (0,0) and (1,1). The specific meaning of the
-AUC (area under the curve) statistic is, that it is the probability that the
-classifier will rank a randomly chosen positive example more highly than a
-randomly chosen negative example.
+AUC (area under the curve) statistic is: the area under the curve is the
+probability that the classifier will rank a randomly chosen positive example
+more highly than a randomly chosen negative example.
 
 % -----------------------------------------------------------------------------
 
@@ -1061,91 +1095,98 @@ randomly chosen negative example.
 
 \section{Building the dataset}
 
-One of the most important things for the classification based approach that we
-have decided to use in this project is to build a dataset that is
-representative of the problem domain, and to ensure that the dataset has a
-representation that is amenable to classification. In this section we will
-discuss our approach to constructing a dataset that allows us to achieve the
-aims outlined in this paper.
+One of the most important problems that we had to solve, in order to build our
+classification based VAD system, was to build a dataset that is representative
+of our problem. We also have to ensure that the dataset can easily be ingested
+for use in a classifier. In this section we will discuss our approach to
+constructing a dataset that allows us to achieve the aims outlined in this
+paper.
 
 The first step in building the dataset was to record a reasonable amount of
 audio that can be used to build the classifier. In order to build our sample
-database we used the recording feature of the Mumble\cite{mumble} program,
-connected to the server for the Computer Gaming Society of the University of
+database we used the recording feature of the Mumble\cite{mumble} program. We
+connected to the Mumble server for the Computer Gaming Society of the University of
 Bristol Students union. Due to the fact that there were multiple players during
 each session, we were able to capture separate recording channels for each
 player in the game. In total this database amounts to 24 hours of audio,
 although not all of this audio was used in the overall classification system.
 The audio captured was of extremely high quality at 48KHz with 24 bit samples.
 This was compressed down to 16 bit samples at 48KHz for use in this project due
-to the large memory requirements of pulling the entire set into memory. 
+to the large memory requirements of loading the entire set.
 
 It is worth noting at this point that while there are existing datasets such as
 the Buckeye corpus\cite{buckeye}, none of them contain noise that comes from
-keyboard and mouse inputs, which is the critical target of our project. It is
+keyboard and mouse inputs. This being the critical target of our project. It is
 also worth noting that due to the large number of people that were involved
 with the recording we get a large number of different microphone/keyboard/mouse
-configurations to build a classifier that is robust to these different
-configurations. Additionally it is worth noting that there is a minor gender
-imbalance in this dataset, with 10 males and only 1 female in the data set.
-Whilst this may cause the classifier to generalise less well, the data set was
-recorded from the best available source at the time.
+configurations. This is useful to build a classifier that is robust to these
+different configurations. Additionally it is worth noting that there is a minor
+gender imbalance in this dataset, with 10 males and only 1 female in the
+dataset. Whilst this may cause the classifier to generalise less well, the
+dataset was recorded from the best available source at the time.
 
 Once the audio had been recorded the task of labelling presented itself.
 Initially this labelling was performed by opening the audio in the audio editor
 Audacity\cite{audacity} and then selecting regions of audio and playing them
-back, this approach had the advantage of allowing relatively large, continuous
-regions to be labelled quickly, but it was a very slow process when there were
-short regions where people would utter short words and then return to the
-silence/typing class. In order to speed this process up a simple python script
-was written with a very simple class detector. In order to make a best guess
-the script ran on 200ms windows of audio, detecting whether the sum of the
-absolute value of each of the frames was above some very low threshold, if the
-sum of the current frame was the same side of the threshold as the previous
-frame then they were joined together, this meant that the smallest audio frame
-that the user had to label was 200ms, and the longest would be when there was
-contiguous speech, which based on labelling experience was around 4 seconds. An
-example waveform with a contiguous region of 2.6 seconds, followed by a 200ms
-region of shortest change is given in figure \ref{img:labelling_example}. This
-allowed for background noise to be separated from both sharp keyboard impulses
-and people speaking, it then interactively asked the user to label the audio by
-hand. In addition to this windows of total silence were simply given a
-homogeneous background noise label (due to the fact that frames with 0
-amplitude clearly do not represent someone speaking). The labelled data was
-stored in an sqlite database, with the start time, end time, original file name
-and the class label. It is worth noting that whilst this approach allowed for
-quick labelling there were times where the same class was given to a large
-range of audio which was primarily in one class, with a very short tail of the
-other class at the end. We feel that this problem did not skew the
-classification results too much, due to the very high classification accuracy
-that we were able to build.
+back. This approach had the advantage of allowing relatively large, continuous
+regions to be labelled quickly. The disadvantage was that it was a very slow
+process when there were short regions where people would utter short words and
+then return to the silence/typing class.
 
-It is worth noting that due to the fact that we stored the data and the class
-information separately we are able to apply transformations to the raw audio
-data without affecting the accuracy of the labelling. This was useful when we
-started performing experiments such as changes in bits per sample and frame
-rate which have some important effect on classification accuracy. It is also
-worth noting that we did not end up labelling all 24 hours of audio that was
-available: this would taken an incomprehensibly large amount of time and we
-felt that we could still build a valid proof of concept classification system
-with the data that was available to us, specifically we have just over an hour
-of labelled audio, split amongst all but one of our speakers (one of the
-males). The distribution of labelled data amongst the various participants can
-be seen in figure \ref{img:speaker_distribution}. The dominant speaker, speaker
-7 was taken from the recorder's configuration, the most data is available
-because the recorder was always present in any of the recording sessions,
-whereas other users were not. Speaker 3 is the female speaker and forms a
-representative part of the dataset.
+In order to speed this process up a simple python script was written with a
+very simple class detector. In order to make a best guess the script ran on
+200ms windows of audio, detecting whether the sum of the absolute value of each
+of the frames in the window was above some very low threshold. If the sum of
+the current window was the same side of the threshold as the previous window
+then they were joined together. This meant that the smallest audio window that
+the user had to label was 200ms. The longest windows occurred when there was
+contiguous speech, which based on labelling experience were around 4 seconds.
+An example waveform with a contiguous region of 2.6 seconds, followed by a
+200ms region, the shortest region of homogeneous class, is given in figure
+\ref{img:labelling_example}.
+
+This script allowed for background noise to be separated from both: sharp
+keyboard impulses and people speaking. The user was then interactively asked to
+label the audio by hand. In addition to the interactive labelling windows of
+total silence were simply given a homogeneous background noise
+label\footnote{due to the fact that frames with 0 amplitude clearly do not
+represent someone speaking}. The labelled data was stored in an sqlite
+database, represented by: the start time, end time, original file name and the
+class label. The advantage of this approach is that it allowed for quick
+labelling of a lot of data for our classifier. This approach did, however, have
+the disadvantage that some 200ms regions contained audio of multiple classes.
+We feel that this problem did not affect the training set too much, due to the
+very high classification accuracy that we achieved.
+
+Another advantage to this approach is that we have stored the audio and the
+class label information separately. This meant that we were able to apply
+transformations to the raw audio data, without affecting the accuracy of the
+labelling. This was useful when we started performing experiments such as
+changes in bits per sample and frame rate\footnote{These changes have some
+important affect on classification accuracy}. It is also worth noting that we
+did not end up labelling all 24 hours of audio that was available. This would
+taken an incomprehensibly large amount of time. Additionally we felt that we
+could still build a valid proof of concept classification system with the data
+that we labelled. Specifically we have just over an hour of labelled audio,
+split amongst all but one of our speakers (one of the males). The distribution
+of labelled data amongst the various participants can be seen in figure
+\ref{img:speaker_distribution}. The dominant speaker, speaker 7, is the
+recording speaker this speaker was present in every recording session. Speaker
+3 is the female speaker and forms a relatively large part of the data set.
 
 \begin{figure}
-    \includegraphics[height=10cm]{speaker.png}
+    \center{
+        \includegraphics[height=10cm]{speaker.png}
+    }
     \label{img:speaker_distribution}
     \caption{Distribution of speakers in the labelled dataset}
 \end{figure}
 
 \begin{figure}
-    \includegraphics[width=8cm]{labelling1.png}
-    \includegraphics[width=8cm]{labelling2.png}
+    \center{
+        \includegraphics[width=8cm]{labelling1.png}
+        \includegraphics[width=8cm]{labelling2.png}
+    }
     \label{img:labelling_example}
     \caption{Example of contiguous and short region in simple labelling system}
 \end{figure}
@@ -1155,74 +1196,77 @@ representative part of the dataset.
 From the start we used the Random Forest classifier discussed in section
 \ref{section:random-forest}, this is due to both familiarity, and availability.
 Specifically we took an off the shelf implementation from the
-scikit-learn\cite{sklearn} Python library. This library was chosen due to it's
+scikit-learn\cite{sklearn} Python library. This library was chosen due to its
 general popularity and the author's familiarity with python. Once the
-classifier had been chosen we decided to act on windows of 16ms, this number
-was chosen because it is used in gaming applications as the target framerate of
-any on screen graphics, corresponding to 60 frames per second, which most
-players perceive to be acting in real time. The background research indicates
-that this frame size is not outside the desired range of 10-30ms, it is worth
-however noting that the Shin\cite{shin} system uses a slightly shorter, 10ms
-window size.
+classifier had been chosen we decided to classify on windows of 16ms. This
+window length was chosen because it is used in gaming applications as the
+target frame rate for any on screen graphics. This frame rate corresponds to 60
+frames per second, which most players perceive to be acting in real time. The
+background research indicates that this frame size is not outside the desired
+range of 10-30ms, it is worth however noting that the Shin\cite{shin} system
+uses a slightly shorter, 10ms window size.
 
 In this section, classification accuracies are reported as the result of a 10
-fold, randomised, stratified cross validation (there was a minor imbalance in
-the number of samples in each of the classes, with roughly 53\% background
-noise and 47\% voice). The folds were trained with 66\% of the data in the
-training set, we felt that this split gives a reasonable tradeoff between
-giving the classifier sufficient data to train on, and not training in such a
-way that the classifier would be overly biased towards the dataset, in other
-words we are trying to retain some of the generalizability of our classifier by
-using a 66\% training set rather than a 90\% training set.
+fold, randomised, stratified cross validation\footnote{There was a minor
+    imbalance in the number of samples in each of the classes, with roughly
+    53\% background noise and 47\% voice}.  The folds were trained with 66\% of
+    the data in the training set, we felt that this split gives a reasonable
+    tradeoff between giving the classifier sufficient data to train on, and not
+    training in such a way that the classifier would be overly biased towards
+    the dataset. In other words we are trying to retain some of the
+    generalizability of our classifier by using a 66\% training set rather than
+    a 90\% training set\footnote{The 90\% split is standard for a 10 fold cross
+validation}.
 
 The general binary classification problem that we formulated in the technical
 background chapter of this paper requires that we have some fixed size vector
-of real numbers for each sample in the training/test sets, obviously this means
+of real numbers for each sample in the training/test sets. Obviously this means
 that we cannot pass some arbitrary length audio stream into the classifier and
-attempt to build a result, so the natural thing to do is to apply a "windowing"
-to the audio. Specifically: we must pick a fixed window size that is short
+attempt to get a result. The first order solution to this problem is to apply a
+window the audio. Specifically: we must pick a fixed window size that is short
 enough that it will not be perceived as lagging whilst classification is
-occurring, short enough that we can classify it in real time (if our window
-contains 1 million samples it is unlikely that we can classify it in real
-time), and long enough that it contains enough information so that it can be
-classified.
+occurring, short enough that we can classify it in real time \footnote{if our
+window contains 1 million samples it is unlikely that we can classify it in
+real time}, and long enough that it contains enough information so that it can
+be classified.
 
 We initially chose a 16ms window size as the size of the window for
 classification, this falls within the common window sizes in the background
-literature, which typically fall in the 10ms-30ms, and our specific choice of
-16ms was made because this is the traditional framerate that many gaming
-applications target, representing 60 frames a second, traditionally perceived
-as smooth by most gamers. In chapter \ref{chap:evaluation} we assess the
-relative merits of window sizes in the 10-30ms range, and the affects those
+literature, which typically fall in the 10ms-30ms. Our specific choice of 16ms
+was made because this is the traditional framerate that many gaming
+applications target, representing 60 frames a second. This is traditionally
+perceived as smooth by most gamers. In chapter \ref{chap:evaluation} we assess %todo: this
+the relative merits of window sizes in the 10-30ms range, and the effects those
 have on classification accuracy. Our initial choice of 16ms, with the 48000Hz
 audio that we use gives us 768 samples per window. Initially we decided to pass
 all 768 samples as a vector as the representation of the window for
 classification.
 
 The classifier with 768 samples gave a relatively unsatisfying classification
-accuracy of around 77\%. It was obvious that the raw samples were not amenable
-to classification due to the position of individual windows having very little
-with the actual audio that was happening, and more importantly each frame
-within the 16ms window basically took every value regardless of class, so we
-began to implement features from the background research to begin to improve
-classification accuracy.
-
-In order to allow easy construction of a representation of the audio that would
-allow for a high classification accuracy, we added another stage to the
-pipeline that sat between the audio on the hard drive and the classifier.
-Specifically the pipeline had these stages:
+accuracy of around 77\%, in cross validation. It was obvious that merely taking
+the windows and passing them into the classifier would not give an accurate
+classification result. The reason for this is that two windows that essentially
+represent the same sound could be offset by one sample, the classifier would
+treat these as two wildly different samples, despite them having similar
+frequency components and other features. We felt that much could be done to
+improve the classification accuracy of the system by building a good feature
+representation. In order to allow easy construction of a representation of the
+audio that would allow for a high classification accuracy, we added another
+stage to the pipeline that sat between the audio on the hard drive and the
+classifier. Specifically the pipeline had these stages:
 
 \begin{itemize}
 
-    \item For reach row of the database, extract class label, start time, end time
-        and file name
+    \item For reach row of the database, extract class label, start time, end
+        time and file name.
 
     \item For each of those, open the file for reading and read samples out of
-        the file between the start time and the end time
+        the file between the start time and the end time.
 
     \item Cut the sample into 16ms windows, appending 0s if necessary.
 
-    \item Apply all feature transforms to get a uniform width vector of integers
+    \item Apply all feature transforms to get a uniform width vector of real
+        numbers.
 
     \item Send feature vectors along with class labels into the classifier for
         training.
@@ -1235,85 +1279,85 @@ based on the research and also some visualization/analysis of the dataset. The
 initial feature set we went with was:
 
 \begin{enumerate}
-    \item Energy: the sum of squares of the frame, referred to in the technical
+    \item Energy: the sum of squares of the window, referred to in the technical
         background chapter.
 
-    \item Zero crossing rate: the number of times the samples in the frame
+    \item Zero crossing rate: the number of times the samples in the window
         change in sign, referred to in the technical background chapter.
 
     \item The energy of the 3500 to 4300Hz frequency band: implemented as a
-        squared sum of the fourier magnitude domain of the values in this
+        squared sum of the Fourier magnitude domain of the values in this
         frequency band. This feature was implemented due to it corresponding to
-        a peak in the average fourier transform of one of the classes
+        a peak in the average Fourier transform of one of the classes
 
-    \item The energy of the 5400 to 6800Hz frequency band: implemented as above,
-        This feature was implemented due to it corresponding to a peak in the
-        average fourier transform of one of the classes.
+    \item The energy of the 5400 to 6800Hz frequency band: implemented as
+        above, This feature was implemented due to it corresponding to a peak
+        in the average Fourier transform of one of the classes.
 
     \item The energy of the 1800 to 2700Hz frequency band: this corresponds to
         the most dominant frequencies of voice according to the research
 
     \item The dominant frequency in the 300 to 5000Hz band: this is a wide band
-        around the fundamental frequency of human voice, up to a very high harmonic,
-        in an attempt to differentiate keyboard noise from voice.
+        around the fundamental frequency of human voice, up to a very high
+        harmonic. Used to attempt to differentiate keyboard noise from voice.
 
-    \item The energy in the 0-100Hz energy band: this band was chosen
-        due to the effects of windowing on the fourier-amplitude domain and is discussed
-        further in this section.
+    \item The energy in the 0-100Hz energy band: this band was chosen due to
+        the effects of windowing on the Fourier-amplitude domain and is
+        discussed further in this section.
 
-    \item The kurtosis of the fourier-amplitude domain: this is effectively a
+    \item The kurtosis of the Fourier-amplitude domain: this is effectively a
         measure of "peakyness" of the spectrum and will be discussed further
         in this section.
 
+    \item The residual from a p=12 LPC analysis: as discussed in the technical
+        background chapter, the LPC has been shown to be a good predictor of
+        voice signals. The residual is computed as the squared error between
+        the prediction of the LPC and the window.
 
-    \item The residual from a p=12 lpc analysis: as discussed in the technical
-        background chapter, the lpc has been shown to be a good predictor of
-        voice signals, with p much lower than the period of the voice signal.
-        The residual is computed as the squared error of the LPC over the window.
-
-    \item The 12 coefficients of a p=12 pole lpc analysis: these coefficients
-        give a different view on the result of the LPC from the residual. Our
-        fear with this feature was that they may have a high level of
-        covariance. But in \ref{fig:covariance-lpc} we can see that there is
-        blah
+    \item The 12 coefficients of a p=12 pole LPC analysis: These coefficients
+        are essentially a different representation of the result of the LPC
+        when compared with the residual mentioned above. Our fear with this
+        feature was that they may have a high level of correlation. We have
+        extensively compared the correlations of our features below.
 
     \item The third component of the power spectral density of the signal: this
-        component corresponds to a large speak in the average power spectrum,
-        which can be seen in \ref{fig:psd}.
+        component corresponds to a large peak in the average power spectrum.
+        This can be seen in \ref{fig:psd} TODO: add this in.
 
-    \item The dominant component of the power spectal density of the signal
+    \item The dominant component of the power spectral densities of the signal
         above the third component: this feature was determined experimentally
         to be a reasonable weak estimator that separates our negative and
         positive classes.
 
-    \item The sum of the power spectral densities between the 30th and 37th components:
-        this feature was determined experimentally to help classification as much
-        as any of the other features.
+    \item The sum of the power spectral densities between the 30th and 37th
+        components: this feature was determined experimentally to help
+        classification as much as any of the other features.
 
-    \item The energy at another peak (21st component) within the PSD of the signal:
-        this was also determined experimentally to provide reasonable classification
-        accuracy on our problem set.
+    \item The energy at another peak (21st component) within the PSD of the
+        signal: this was also determined experimentally to provide reasonable
+        classification accuracy on our problem set.
 
 \end{enumerate}
 
-Features 2, 3, 4 and 7 are shown along with the complete fourier amplitude domain
-in \ref{fig:frequencies}
+Features 2, 3, 4 and 7 are shown along with the complete Fourier amplitude
+domain in \ref{fig:frequencies}
 
-\begin{figure}
-    \label{fig:frequencies}
-    \includegraphics[height=10cm]{frequencies.png}
-    \caption{Histogram of fourier domain for voice and noise classes, voice
-    at the top, and noise at the bottom, with the frequency bands highlighted}
+\begin{figure} \label{fig:frequencies} \center{
+    \includegraphics[height=10cm]{frequencies.png} } The voice FFT is the top
+    subplot, and the noise FFT is the bottom subplot, with the frequency bands
+    mentioned in 2,3,4 and 7 highlighted.
+
+    \caption{Histogram of fourier domain for voice and noise classes}
 \end{figure}
 
 As we can see these three frequency bands vary from each other between the two
-classes, specifically we can see that these frequency bands represent spikes in
-the noise class, that are more flat in the voice class, and in addition that
-the relative amplitude at these points is much, much lower for the noise class
-than the voice, class. In \ref{table:importances} we show the relative feature
-importances as computed by the classifier over our original feature set. These
-give relatively high importances (specifically just over 11\% of
-the classification accuracy come from the 3 higher frequency bands).
+classes. Specifically we can see that these frequency bands represent spikes in
+the noise class and are more flat in the voice class. Additionally we can see
+that the relative amplitude at these points is much lower for the noise
+class than the voice class. In \ref{table:importances} we show the relative
+feature importances as computed by the classifier over our original feature
+set. These give relatively high importances (specifically just over 11\% of the
+classification accuracy come from the 3 higher frequency bands).
 
 \begin{figure}
     \label{table:importances}
@@ -1350,62 +1394,69 @@ the classification accuracy come from the 3 higher frequency bands).
 \end{figure}
 
 The importances are computed by the random forest classifier during training
-and reported once tranining is complete. They are computed as a function of
-depth of the feature within each tree, and the relative fraction of instances
+and reported once training is complete. They are computed as a function of
+depth of the feature within each tree and the relative fraction of instances
 that can be accurately split by that feature. These importances are then
-averaged accross the entire forest. From this we can get a relative ranking and
+averaged across the entire forest. From this we can get a relative ranking and
 importance value from the features. We can see here that two of our features
 (0-100Hz dominant frequency and third PSD component) account for approximately
-30\% of the importance of the classifier, while the rest of the features all
-have roughly the same importance, ranging from 1.6\% to 5.4\% relative
-importanca.
+30\% of the importance of the classifier. The rest of the features all have
+roughly the same importance, ranging from 1.6\% to 5.4\% relative importance.
 
-One of the most interesting things that this indicates is that the
-energy of the audio windows is not a good feature to classify with on our
-particular dataset. This result is somewhat unexpected as classification energy
-has typically been the single most used feature that we could find in our
-research. The cause for the relatively low importance of the energy feature in
-our data set will be due to the slightly different nature of the problem:
-energy deals specifically with the perceived loudness of a frame, and in our
-data set, the frames with keyboard noise have roughly equal amplitude to the
-frames that have human speech in them.
+One of the most interesting things that this indicates is that the energy of
+the audio windows is not a good feature for our particular dataset. This result
+is somewhat unexpected as classification energy has typically been the single
+most used feature in other VAD systems. The reason that this feature has a low
+importance, despite being one of the most commonly used features, is that
+energy is linked to the perceived loudness of a frame. In our data set the
+frames with keyboard noise in them have roughly the same amplitude as those
+that have human speech in them.
 
 The zero crossing rate similarly performs as one of the lower accuracy
 features. This feature was also found commonly in the background research, and
 more specifically has been shown to be a good feature for classifying
-percussion \cite{gouyon}. Given that keyboard noise is generated in a similar
-way to percussion in music (a fast impact on to a surface) we expected this
-feature to provide a much better importance, this can perhaps be explained by
-noting that the zero crossing rates between keyboards and voice may be similar
-whilst the crossing rates between keyboards and voice, and background noise may
-be very different.
+percussion \cite{gouyon}. Keyboard noise is generated in a similar way to
+percussion in music (a fast impact on to a surface). As such we expected this
+feature to have a high classification importance. This can perhaps be explained
+by noting that the zero crossing rates between keyboards and voice may be
+similar, whilst the ZCR between keyboards and background noise may be
+different.
 
 The explanation for the very high level of classification importance provided
 by the 0-100Hz band energy comes from the windowing process: the lower
-frequency information of the fourier transform is naturally amplified by the
-windowing process and this is the explanation for why the fourier transform
-shows such a high spike for both classes in this region. We can see more
-clearly, however, that in \ref{fig:frequencies} the average fourier transform
-has a dip for the voice class in this frequency band, but a spike for the noise
-class in this frequency band, this, we believe, accounts for the reason why
-this feature splits the highest fraction of samples in our data set.
+frequency information of the Fourier transform is naturally amplified by the
+windowing process. This is the explanation for why the Fourier transform shows
+such a high spike for both classes in this low frequency region. Looking to
+\ref{fig:frequencies} we can see that:
 
-The reason for the third PSD component also giving this very accurate
-classification is that it speaks for roughly the same part of the spectrum as
-the energy band in 0-100Hz. Based off this finding we also tried a composite
-feature: the sum of the PSD components 0-3 as opposed to just the 3rd
-component. This gave a slightly improved classification accuracy: 91\% in
-cross val versus 90\% and so our updated feature set used the sum of the band
-instead of the single value.
+\begin{itemize}
+
+    \item There is a dip in the 0-100Hz band in the voice class.
+
+    \item There is a spike in the 0-100Hz band in the noise class.
+
+\end{itemize}
+
+We believe that these two reasons account for why this feature splits the
+highest fraction of samples in our data set.
+
+The third PSD component also has a very high classification importance. The
+reason for this is essentially the same as the reason that the low frequency
+band has such a high importance. The third PSD component also represents one of
+the lowest frequency components of the PSD. Based off this finding we also
+tried a composite feature. Instead of the third component we used the sum of
+PSD components 0-3. This gave a slightly improved classification accuracy: 91\%
+in cross validation versus 90\% and so our updated feature set used the sum of
+the band instead of the single value.
 
 Whilst the majority of the heavy lifting of the classification is done by these
 two features (accounting for correctly classifying 30\% of the samples). The
 remaining 70\% comes from the composite interaction of the remainder of our
-features. To get an understanding as to whether any of these features interact
-with each other, we decided it would be useful to build a matrix of feature
-correlations. If any features are highly correlated then it would suggest that
-these features do not give us as much useful information as if they were highly
-anti-correlated.
+features. To get an understanding as to whether any of these features are not
+independent from each other, we decided it would be useful to build a matrix of
+feature correlations. If any features are highly correlated then it would
+suggest that these features do not give us as much useful information as if
+they were in no way correlated.
 
 \begin{sidewaystable}
     \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
@@ -1505,8 +1556,8 @@ anti-correlated.
 \end{figure}
 
 From these tables we can see that there is a very low level of correlation
-between most of the features: the average correlation is (blah) and the
-standard deviation is (blah).
+between most of the features: the average correlation is (todo: average the
+table) and the standard deviation is (todo: stdev the table).
 
 However, some of these variables are highly correlated. This suggests that
 perhaps we could remove these features or perform a principal component
@@ -1524,8 +1575,8 @@ analysis to further reduce the dimensionality of the data. Specifically:
         represent the 0th and 2nd components of the LPC. Again this is somewhat
         expected because some signals will have little variation.
 
-    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components have a high
-        correlation.
+    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components
+        have a high correlation.
 
     \item 23 and 5 have a high level of correlation. This represents the sum of
         the first 4 (0-3) PSD components and the energy of the overall 16ms
@@ -1535,53 +1586,54 @@ analysis to further reduce the dimensionality of the data. Specifically:
         intuitively this result makes sense, it is worth noting that the sum of
         the 0-3 PSD band gives much more classification importance (see:
         \ref{table:importances}) than the energy of the frame. As such it is
-        worth keeping both of these features, as it is trivial to compute the
+        worth keeping both of these features: it is trivial to compute the
         energy (sum of squares) of the frame of audio.
 
     \item 6 and 25 have a correlation of -0.550. This is a relatively strong
         negative correlation. The kurtosis of the FFT and the zero crossing
-        rate are somewhat inherently linked as the whole spectrum of the signal
-        will determine the zero crossing rate, and the kurtosis is a summary
-        statistic of the FFT.
+        rate are somewhat inherently linked. This is because the whole spectrum
+        of the signal will determine the zero crossing rate and the kurtosis
+        is a summary statistic of the FFT.
 
     \item 8 and 22 have a correlation of 0.780. The 0th LPC coefficient and the
         dominant component of the PSD after the third component are possibly
         linked in that the LPC coefficient will change with frequency
         information and the dominant frequency is obviously directly extracting
-        frequency information
+        frequency information.
 
     \item 8 and 25 have a correlation of 0.890. The 0th LPC coefficient and the
-        zero crossing rate are inherently linked: the zero crossing rate describes
-        a characteristic that the LPC is trying to accurately predict, that is the
-        rate of sign change in the signal.
+        zero crossing rate are inherently linked: the zero crossing rate
+        describes a characteristic that the LPC is trying to accurately
+        predict, that is the rate of sign change in the signal.
+
 \end{itemize}
 
 Here we have seen that only 9 pairs of features have correlations of above 0.5.
 This is a very encouraging finding as it indicates that the vast majority of
-our features present different "views" on the data and as such we have a
+our features present different "views" on the data. As such we have a
 representation of voice/keyboard noise/background noise that is very amenable
-to classification. Independence between features is very important for us to
-compute a good classification as if two features are highly correlated they do
-not provide as much useful information for classification as if the two features
-are highly uncorrelated.
+to classification. Independence between features is very important for us: if
+two features are highly correlated they do not provide much useful information
+for classification. By comparison if the two features are highly uncorrelated
+they provide much more information for classification.
 
-Checking these feature correlations during building the system was useful, if a
-new feature provided a low gain in either classifier importance or had high
-correlations with other features we could easily reject them. This way we were
-able to reject a number of features from our implementation. We have documented
-these below with reasons for their rejection.
+Part of the implementation process that was very useful was checking both the
+feature correlation and the relative classifier importances of our features.
+The reason for this was that it allowed us to reject features that high
+correlations or low importances. We have documented these below with reasons
+for their rejection.
 
 \begin{itemize}
 
     \item The mean value of frames in the window. This was found to have very
-        poor predictive importance, even with fewer features.  This is
-        especially bad as predictive importance is normalized to sum to 1
-        regardless of the feature count.  Specifically the predictive
-        importance was: 0.1\%, some 10$times$ smaller than even our worst
-        predictive importances.
+        poor predictive importance, even with low feature counts. With low
+        feature counts this especially bad as predictive importance is
+        normalized to sum to 1 regardless of the feature count. Specifically
+        the predictive importance was: 0.1\%, some 10$times$ smaller than even
+        our worst predictive importances.
 
     \item The spectral flatness measure of the power spectrum: in the technical
-        background neasure we indicated that the LPC residual is equivalent to
+        background section we indicated that the LPC residual is equivalent to
         the spectral flatness measure of the absolute values of the fourier
         transform. Whilst the power spectrum does differ from the frequency
         spectrum it is somewhat correlated, and as such the SFM of the power
@@ -1589,59 +1641,60 @@ these below with reasons for their rejection.
 
     \item The energy of the 2-4Khz band. Whilst this feature was used in
         \cite{shin} we found that this feature did not give good predictive
-        power.  This feature was actually implemented before the energy bands
-        that we used but we found that the bands that we decided on gave better
-        predictive power for our problem set. We believe this is due to both voice
-        harmonics and keyboard noise occupying this frequency band.
+        power. This feature was actually implemented before the energy bands
+        that we used in the final classifier. We found that the bands that we
+        decided on gave better predictive power for our problem set. We believe
+        this is due to both voice harmonics and keyboard noise occupying this
+        frequency band.
 
     \item The dominant frequency of the entire spectrum. This feature was
         originally implemented in an attempt to increase classification
-        accuracy, however based on the spectra in \ref{fig:frequencies} the
-        problem with this feature becomes obvious: due to the windowing process
-        much of the low frequency information gets overly represented. This
-        means that this feature would always stop above the 200Hz value. The
-        features we ended up using specifically take into account this spike
-        and attempt to give a much better representation of the dominant
-        frequencies in the signal.
+        accuracy. However based on the spectra in \ref{fig:frequencies} the
+        problem with this feature becomes obvious. Due to the windowing process
+        much of the low frequency information gets disproportionately
+        represented. This means that this feature would always stop above the
+        200Hz value. The features we ended up using specifically take into
+        account this spike and attempt to give a much better representation of
+        the dominant frequencies in the signal.
 
     \item After the features that have been described above were implemented in
-        the system we investigated adding cepstral features into the system, we
+        the system we investigated adding cepstral features into the system. We
         found that the features from the cepstrum were already accounted for in
-        the rest of our features, and that they were correlating highly with
-        many of the other features in the classifier without providing
-        particularly high feature importances from the classifier, and as such
-        they were rejected.
+        the rest of our features. We also found that they were correlating
+        highly with many of the other features in the classifier without
+        providing particularly high feature importances. As such they were
+        rejected.
 
     \end{itemize}
 
 It is worth noting that some of the features that we built did not come
 directly form the background research given in the technical background section
-of this document, but were instead based on tweaks from the features listed.
+of this document. Instead they were based on tweaks from the features listed.
 For example the FFT Kurtosis metric that we used was inspired by the
-"peakyness" feature in \cite{shin}. Whilst this feature was not clearly
-documented as to how it was exactly calculated there are two metrics that could
-be used to compute the relative peakyness of a distribution. The first is the
+"peakyness" feature in \cite{shin}. In \cite{shin} the process for calculating
+this feature was not clearly documented. We found two metrics that could be
+used to compute the relative peakyness of a distribution. The first is the
 spectral flatness measure (flatness being the opposite of peakyness). This
-feature was computed on both the fourier spectrum and the power spectrum and
-was rejected from both because of it's very low classification accuracy. We
-ended up using the kurtosis metric because it measures peakedness relative to a
-normal distribution, for unimodal distributions.\cite{DeCarlo} Our
-distributions are definitely unimodal, they have a peak at the far low components
-of the spectrum (see \ref{fig:frequencies}).
+feature was computed on both the Fourier spectrum and the power spectrum. We
+rejected it because of its very low classification accuracy. We ended up using
+the kurtosis metric because it measures peakedness relative to a normal
+distribution, for unimodal distributions\cite{DeCarlo}. Our distributions are
+definitely unimodal, they have a peak at the far low components of the spectrum
+(see \ref{fig:frequencies}).
 
 \section{Analysis of the features with respect to accuracy}
 
-Once we had built the random forest classifier and tested the features that we
-had, investigated further features and rejected some along the way, the next
-step in our implementation was to determine the absolute predictive power of
-our features. In order to do this we trained decision trees on each feature
-individually: the objective of this exercise was to determine how accurately
-the feature importances reported from the classifier represent the predictive
-power of the individual features, and also to show how much stronger the
-predictive power of the combination of all the features is than any individual
-feature. Another objective here is to demonstrate that the combination of
-features that we have designed perform significantly better than merely
-training a classifier on the entire audio frame.
+Once we had built our feature representation and tested the features with our
+classifier, we decided that the next step in our implementation was to
+determine the predictive power of our features. In order to do this we trained
+decision trees on each feature individually. The objective of this exercise was
+to determine how accurately the feature importances reported from the random
+forest classifier represent the predictive power of the individual features.
+Additionally we wanted to show how much stronger the predictive power of the
+combination of all the features is than any individual feature. Another
+objective here was to demonstrate that the combination of features performs
+significantly better than just passing the entire frame through as the training
+example.
 
 The reports of accuracy here are given by taking the results of a 10 fold, 66\%
 training, 33\% test cross validation. Accuracy was determined using the MAE
@@ -1681,31 +1734,31 @@ here are keyed the same as the mappings in \ref{fig:feature-keys}.
 \end{figure}
 
 As we can see the 0-100Hz band energy feature is by far the best predictor
-within the indivudal feature set. This corresponds strongly with the feature
+within the individual feature set. This corresponds strongly with the feature
 importances computed by the classifier. An interesting upset is that feature 25
-also gives a relatively high prediction rate on it's own, but the zero crossing
-rate was one of the features given the lowest importance by the classifier that
-uses all the features. This is particularly interesting because according to
-the correlation matrix of features, 7 and 25 are relatively uncorrelated
-(-0.077), as such if they both have strong predictive power, we would expect them
-to combine together to give a much better classification accuracy.
+also gives a relatively high prediction rate on its own. The reason for this
+upset is that the zero crossing rate was one of the features given the lowest
+importance by the random forest classifier. This is particularly interesting,
+according to the correlation matrix of features: 7 and 25 are relatively
+uncorrelated (-0.077). If they both have strong predictive power, we would
+expect them to combine together to give a very good classification accuracy.
 
 It is worth noting that our second best predictor from the importances in
-\ref{table:importances}, the sum of the first 4 (0-3 inclusive) PSD components
-comes a very close third in this table, with 68.5\% accuracy as a predictor on
-it's own. The reason that our classification rate is so much higher than any
-individual feature combined is that, whilst each of the individual features may
-not have much better prediction accuracy than the baseline, they are all
-somewhat uncorrelated, meaning that they present different views on the data
-and as such allow the random forest classifier to extract nearly all of the
-variance from the data set and provide a much more accurate classification.
+\ref{table:importances}, the sum of the first 4 (0-3 inclusive) PSD components,
+comes a very close third in this table: with 68.5\% accuracy as a predictor on
+its own. The reason that our classification rate is so much higher than any
+individual feature combined is: whilst each of the individual features may not
+have much better prediction accuracy than the baseline, they are all somewhat
+uncorrelated. This means that they present different views on the data,
+allowing the random forest classifier to extract nearly all of the variance
+from the data set, providing a much more accurate classification.
 
 Much of this section has been to do with demonstrating that the features that
 we have built for our implementation accurately help us solve the
-classification problem that we have: that is accurately discriminating
-background noise and typing from human speech. Based on the results reported
-here we are confident that this implementation is very much a working prototype
-of this system, and that some future work remains in ensuring that this system
+classification problem that we have: accurately discriminating background noise
+and typing from human speech. Based on the results reported here we are
+confident that this implementation is very much a working prototype of this
+system. We believe that some future work remains in ensuring that this system
 is robust to new speakers by building a much larger training set with a much
 more representative sample of speakers.
 
@@ -1713,81 +1766,84 @@ more representative sample of speakers.
 
 One of the most important things in our implementation is to ensure that the
 performance of the classifier is good enough for application in a voice activity
-detection system, additionally the amount of time taken to train the classifier
-is important. Certainly, the actual problem that this classifier is trying to
+detection system. Additionally the amount of time taken to train the classifier
+is important. Certainly the actual problem that this classifier is trying to
 solve is the question as to whether it should, or should not, further transmit
-audio to the rest of a VOIP or speech recognition system, and as such a certain
-amount of online training is possible by asking users to use the less advanced
-"push to talk" detection system.
+audio to the rest of a VOIP or speech recognition system. This decision must be
+made in faster than real time to ensure that there is no perceived lag by the
+user.
 
-By using this system the users are effectively training the system as to which
-pieces of audio they do/do not wish to transmit. We believe that to extend this
-system to new users, this technique could certainly be employed with a real
-time labeller based on the status of the push to talk key and recording the
-audio that is currently going through the system, and in the Critical
-Evaluation section our robustness to unseen speakers is shown to be less than
-perfect, so some online training is very much desired.
+A certain amount of online training is possible by asking users to use the less
+advanced "push to talk" detection system. By using this system the users are
+effectively training the system. They effectively indicate which pieces of
+audio they do/do not wish to transmit. We believe that our system could be
+extended to new users using the push to talk technique for real time labelling.
+In the Critical Evaluation section our robustness to unseen speakers is shown
+to be less than perfect, so some online training is very much desired.
 
-Due to these future plans, it is important to consider the performance of the
-classifier because if it is found to be lacking in either training or
-classification then some improvements must be made. There is also a performance
-concern with our implementation specifically because we used the
-Python\cite{python} programming language which is interpreted and not know for
-its high performance. In addition to this concern we are using the numpy and
-scipy libraries which are not compatible with a JIT implementation of Python,
+It is important to consider the processor performance of the classifier, if it
+is found to be to slow in either training or classification then some
+improvements must be made. There is also a performance concern with our
+implementation, specifically we used the Python\cite{python} programming
+language which is interpreted and not known for high execution speed. In
+addition to this concern we are using the numpy and scipy libraries which are
+not compatible with the most stable JIT implementation of Python,
 PYPY\cite{pypy}. The JIT implementation, obviously, runs somewhat faster than
 the implementation with no JIT.
 
 In this section we document some of the places where optimisations had to be
-made within the system that would otherwise have disabled this project from
-running quickly enough to have a realistic application in the VAD space. Some
-of the optimisations are only useful for use during training over a large
-database, this is due to the fact that they act on batches of instances (either
-arrays of samples or fourier transform results). Other optimisations are useful
-both during training and on-line classification, this is due to the fact that
-audio coming out of the audio hardware is buffered, and we can take advantage
-of there being multiple 16ms windows of audio in the buffer.
+made. We made this optimisations as otherwise the system would not have a
+realistic application in the VAD space. Some of the optimisations are only
+useful for use during training over a large database. These optimisations act
+on batches of instances (either arrays of samples or Fourier transform
+results). Other optimisations are useful both during training and on-line
+classification. This is due to the fact that audio coming out of the audio
+hardware is buffered, and we can take advantage of there being multiple 16ms
+windows of audio in the buffer.
 
 \subsection{Bytes Per Frame}
 
 One of the initial bottlenecks in the implementation of our system was reading
-all the audio of the disk into a representation that could be used for
-processing and then applying processing to that in-memory data. Obviously
-reducing the size of the audio is a simple way to fix this problem, and we
-decided that dropping from 24bit to 16bit frames was a good way to fix this
-problem. Firstly this massively reduced the time to read the files off the disk
-(surprisingly by about a third!) and it also meant that the process of reading
-the audio into an array of numbers was faster. The reason for this is that
-routines for reading 16 bit integers from a packed binary format exist within
-the Python language, but routines for 24 bit integers do not. This meant that
-we had to pull them in as 32 bit integers and then decode them back into their
-24 bit format. This lead to much additional processing which, in a native
-programming language may not have been a problem. Whilst this is an obvious
-drawback of using a high level language like Python it gave some other
-advantages.
+all the audio off the disk into a representation that could be used for
+processing. We also faced a bottleneck with applying processing to that
+in-memory data. Obviously reducing the size of the audio is a simple way to fix
+this problem. We decided that dropping from 24bit to 16bit frames was a good
+way to fix this problem. Firstly this massively reduced the time to read the
+files off the disk (surprisingly by about a third!). It also meant that the
+process of reading the audio into an array of numbers was faster. The reason
+for this is that routines for reading 16 bit integers from a packed binary
+format exist within the Python language, but routines for doing the same to 24
+bit integers do not. This meant that we had to read them in as 32 bit integers
+and then decode them back into their 24 bit format. This lead to much
+additional processing which in a native programming language may not have been
+a problem. Whilst this is an obvious drawback of using a high level language
+like Python the speed of development far outweighs the performance cost.
 
-One of the first advantages that it gave was that computing the fourier
-transform and power spectral densities of the audio happened much more quickly:
-when working with a non-trivial amount of data (approximately 24 hours) this
-makes an appreciable time saving (again approximately half the time, presumably
-because the integers are 16 bit instead of 32 bit).
+One of the first advantages that reducing the bit rate gave was: computing the
+Fourier transform and power spectral densities of the audio happened much more
+quickly. When working with a non-trivial amount of data (approximately an hour)
+this makes an appreciable time saving. Specifically we found that the saving
+was approximately 50\% of the time. We assume this is because we were able to
+pack the integers into 16 bit integers and numpy uses sse vector operations.
 
 Another advantage that this gave was that the classifier was able to train more
-quickly, this is obvious when looking at the specifics of how our classifier
-implementation works: it splits all feature domains until they are fully split,
-so if we reduce the resolution of every feature domain by reducing the
-resolution of the input audio, then we would naturally expect the classifier to
-train more quickly.
+quickly. The reason for this is obvious when looking at the specifics of how
+our classifier implementation works: it splits all feature domains until they
+are fully split. If we reduce the resolution of every feature domain by
+reducing the resolution of the input audio we would naturally expect the
+classifier to train more quickly.
 
 \subsection{Zero Crossing Rate}
 
 When initially building the first implementation of the system, the performance
-bottleneck was not in the training of the classifier, but rather the
-application of the feature transformations to the input audio. One of the ones
-that was taking by far the longest to execute was the zero crossing rate
-feature transformation: the reason for this was that it was, in Python,
-iterating through each element in the array and comparing the sign to the
-previous element and taking a sum. The Python as it stood then is given in
+bottleneck was not in the training of the classifier. Rather the bottleneck was
+the application of the feature transformations to the input audio. One of the
+transforms that was taking by far the longest to execute was the zero crossing
+rate feature transformation. The reason for this was that in Python iterating
+through each element of the audio arrays took an appreciable amount of time.
+
+The Python as it stood then is given in
+
 \ref{list:zcr-slow}.
 
 
@@ -1802,15 +1858,14 @@ previous element and taking a sum. The Python as it stood then is given in
 \end{lstlisting}
 
 This was optimised using the numpy library which was written in pure C, with
-optimised SSE instructions, this gave a huge speedup, on the order of taking 4 hours to
-pull the data set in down to something like only 10 minutes. For training numpy also
-allows one to apply ones transformations in a batch, this optimisation was not
-used for the ZCR feature but was used to give us the ability to perform the
-fourier transform over the entire training set in one go for maximum throughput
-whilst training, this feature will obviously not be available during real time
-classification because we can only apply transforms to each frame as they come
-in. For interest the numpy python code for the zero crossing rate feature is
-given in \ref{list:zcr-fast}.
+optimised SSE instructions, this gave a huge speedup. On the order of taking 4
+hours to read the data set was reduced to only 10 minutes. For training numpy
+also allows one to apply transformations in a batch. This optimisation was not
+used for the ZCR feature. However it was used to perform the Fourier transform
+over the entire training set. This batch optimisation will not be used during
+real time classification: we can only apply transforms to frames as they come
+from the input device. For interest the numpy python code for the zero crossing
+rate feature is given in \ref{list:zcr-fast}.
 
 \begin{lstlisting}[frame=single,caption=Numpy fast zero crossing rate implementation, label=list:zcr-fast]
     def zero_crossings(self, frame, fft):
@@ -1820,30 +1875,27 @@ given in \ref{list:zcr-fast}.
 \subsection{Windowing process}
 
 The windowing process that broke the continuous streams of audio into 16ms
-windows was initially also written in pure python and was very slow. This is a
-problem that affects both the real world and training/test scenarios that we
-have where the data is available as a batch. This is because the audio from the
-hardware data stream is not provided as single frames but is rather buffered
-to achieve better throughput, and we could expect between 2048 and 16384 frames
-of audio at a time (corresponding to 0.04 to 0.34 seconds of lag, depending on
-the quality of the audio hardware that is being used). As such being able to
-perform a batch transformation of the audio to 16ms windows very quickly is very
-important.
+windows was, initially, also written in pure python and was very slow. This is
+a problem that affects both the real world and training/test scenarios that we
+have. This is because the audio from the hardware data stream is not provided
+as single frames but is rather buffered to achieve better throughput. We
+should expect between 2048 and 16384 frames of audio at a time\footnote{corresponding to
+0.04 to 0.34 seconds of lag, depending on the quality of the audio hardware
+that is being used}. Being able to perform a batch transformation of
+the audio to 16ms windows very quickly is very important.
 
-The initial pure python implementation suffered from the problem of working
-when we had a very small training set to work with, taking only a few minutes
-to execute but degraded very much linearly with the amount of audio that had to
-be processed and when the data set grew to many hours, it would run in roughly
-real time, but the overall system would run much more slowly due to this
-windowing process not being the only transformation that happened. The original
-Python code is given in \ref{list:window-slow}. Note that in this
+The initial pure Python implementation of windowing was sufficiently fast with
+a small training set. It took only a few minutes to execute, however this
+performance degraded very much linearly with the amount of audio that had to be
+processed. When the data set grew to around an hour this was far too slow. The
+original Python code is given in \ref{list:window-slow}. Note that in this
 implementation the audio is padded with zeros until it meets a round number of
 window lengths. This choice could have potentially degraded accuracy, but
-seemed better than trying to read the rest of the audio from the file given
-that if the samples were not a round number then the next audio frames had been
-labelled with a different class. Also given that we trained with 200ms wide
-windows this means that only $1$ in every $12$ windows would suffer from this
-problem.
+seemed better than trying to read the rest of the audio from the file. If the
+samples did not come to a round number of windows, the next part of audio had
+been labelled with a different class. Also given that we trained with 200ms
+wide windows this means that only $1$ in every $12$ windows would suffer from
+this problem.
 
 
 \begin{lstlisting}[frame=single,caption=Original slow windowing implementation, label=list:windowing-slow]
@@ -1870,26 +1922,28 @@ def samples_to_16ms_frames(samples, framerate=48000):
 
 One of the most major problems with this implementation is that a lot of memory
 is allocated as it is executing. Specifically the build array is reallocated
-every time a frame completes and also many temporary values, such as the array
-of zeros at the end of execution will be garbage collected. As discussed above
-having a slow windowing process is very problematic for a system which operates
-on windowed audio. However, a little bit of thought leads to a huge performance
-gain with this system. Specifically the 16ms windows at 48000Hz are 768 samples
-wide. This means that we can append zeros to our samples array until it has a
-length that is evenly divisible by 768 and then reshape it into a 2 dimensional
-array that is 768 by the total number of windows. Numpy once again has a fast
-vector function to do this once the memory has been allocated, and we took full
-advantage of that. This made the function go from showing up at the top of a
-profile on a reduced run of 20 minutes, to disappearing down to the bottom and
-giving a speedup to around 10 minutes. On the full run this reduced the
-training time when combined with the zero crossing rate optimisation down to 20
-minutes. The optimised numpy code is given in \ref{fig:windowing-fast}.
+every time a window completes. Also many temporary values will be garbage
+collected. As discussed above having a slow windowing process is very
+problematic for a system which operates on windowed audio. However, a little
+bit of thought leads to a huge performance gain with this system. Specifically
+the 16ms windows at 48000Hz are 768 samples wide. This means that we can append
+zeros to our samples array until it has a length that is evenly divisible by
+768. We can then reshape it into a 2 dimensional array that is 768 by the total
+number of windows. Numpy once again has a fast vector function to do this once
+the memory has been allocated. We took full advantage of that. This made the
+function run much more quickly.  We profiled the original implementation, and
+the sped up implementation and the results were astounding. Instead of showing
+up at the top of a profiled run, it disappeared straight to the bottom. The
+performance improvement was roughly a 2x speedup of the entire
+load/transform/classify system. On the full run this reduced the training time
+when combined with the zero crossing rate optimisation down to 5 minutes. The
+optimised numpy code is given in \ref{fig:windowing-fast}.
 
 \begin{lstlisting}[frame=single,caption=Optimised windowing implementation, label=list:windowing-fast]
 
 def samples_to_16ms_frames(samples, framerate=48000):
     frame_size = int(48000*16.0/1000)
-    while len(samples) \% frame_size != 0:
+    while len(samples) % frame_size != 0:
         samples.append(0)
 
     mses = numpy.reshape(samples, (-1, frame_size))
@@ -1900,23 +1954,22 @@ def samples_to_16ms_frames(samples, framerate=48000):
 \subsection{Classifier optimisation}
 
 The random forest classifier sits at the core of our system as the actual VAD
-component of the VAD detector, so it is important that it runs as quickly as it
-can. The random forest implementation that we have used, which is provided by
-the SKLearn library is written in optimised C and provides options to train
-trees in parallel. This is possible because the trees in the random forest are
-independent of each other and are trained by performing random selection with
-replacement from the training set as well as random selection of a subset of
-features. This way many trees will be grown all with different biases on the
-training set in the hope of improving classification accuracy.
+component of the VAD detector. It is, therefore, important that it runs as
+quickly as it can. The random forest implementation that we have used, which is
+provided by the SKLearn library is written in optimised C. It provides options
+to train trees in parallel. This is possible because the trees in the random
+forest are independent from each other and are trained on parts of the data
+that are unrelated. This way many trees will be grown all with different biases
+on the training set in the hope of improving classification accuracy.
 
 We took full advantage of the parallel training option using 3 cores to train 3
 times as quickly. However this exposed a minor problem when we were initially
 passing the entire window as samples to the classifier instead of our reduced
-feature set. The problem was that python has no real threading support and so
-the data could not be shared across threads but was instead copied across
-processes with a very large data set this lead to memory problems. The solution
-to this whilst inelegant was effective: we increased the amount of ram in the
-machine that we were training on to 32 gigabytes. This is noted as an
+feature set. The problem was that Python has no real threading support and so
+the data could not be shared across threads, it was instead copied across
+processes, with a very large data set this lead to memory problems. The
+solution to this whilst inelegant was effective: we increased the amount of RAM
+in the machine that we were training on to 32 gigabytes. This is noted as an
 implementation detail in case future research is done with either our data set
 or one of similar size: building features that effectively compress the size of
 the data set whilst retaining much of the detail are very important when
@@ -1924,23 +1977,23 @@ working with a large data set.
 
 This becomes particularly important as we envisage production ready
 implementations of this system as working on many hundreds of hours of audio
-instead of many tens and as such would look to either using a language which
-does not require the data set to be copied across many processes or not training
-across many processors but instead training in serial.
+instead of many tens. As such we would look to either using a language which
+does not require the data set to be copied across many processes or not
+training across many processors but instead training serially.
 
 \subsection{Results of optimisation}
 
 To give some idea of how effective these optimisations were we decided to time
-the fully optimised implementation loading all the audio data that was labelled
-off disk, applying feature transformations (mostly one at a time, with the
-batch fourier transform and batch windowing) and training the classifier. The
-results of this optimisation are reported as an improvement on the some initial
-4 hours that it took to perform these steps. We have reported with both hot and
-cold disk caches to give some idea of the affect of storing all the data in the
-disk cache which is possible due to the large amount of ram on the machine.
-The results are in \ref{table:optimisation-results}. As we can see the hot disk
-cache helps a bit, which was very useful when repeatedly doing training runs as
-the classifier was being improved.
+the fully optimised implementation. Specifically we timed: loading all the
+audio data off disk, applying feature transformations and training the
+classifier. The results of this optimisation are reported as an improvement on
+the some initial 4 hours that it took to perform these steps. We have reported
+with both hot and cold disk caches. The reason for this is to give some idea of
+the effect of storing all the data in the disk cache which is possible due to
+the large amount of ram on the machine. The results are in
+\ref{table:optimisation-results}. As we can see the hot disk cache helps a bit,
+which was very useful when repeatedly doing training runs as the classifier was
+being improved.
 
 \begin{figure}
     \begin{tabular}{|l|l|}
@@ -1958,64 +2011,63 @@ the classifier was being improved.
 In this project we have implemented a random forest classifier that gives a
 very high classification accuracy on the problem data set that it has been
 trained against. Much of the implementation's classification accuracy comes
-from the fact that our features have a very low level of inter correlation and
-more specifically only 9 of the 625 possible feature pairs have a correlation
-of more than 0.5. This is encouraging as it indicates that our features give
-a very independent view on the data set, and as such we would very much look
-to this combination of features to be considered for future VAD systems.
+from the fact that our features have a very low level of inter correlation,
+specifically only 9 of the 625 possible feature pairs have a correlation of
+more than 0.5. This is encouraging as it indicates that our features give a
+very independent view on the data set. As such we would very much look to
+this combination of features to be considered for future VAD systems.
 
 Having independent features, whilst encouraging, is not enough on its own to
-give a good classification rate, one thing that is very important is to have a
+give a good classification rate. One thing that is very important is to have a
 good classification algorithm for your features. The classification algorithm
 that we have used (the random forest) gives a very good classification with the
-parameters that we have chosen, and in the next chapter we investigate whether
+parameters that we have chosen. In the next chapter we investigate whether
 other, commonly used, classification algorithms can give a better result on our
 data set.
 
 One of the critical requirements of this classification system is that it has
-good performance when working with representative data, and was have documented
-some of the optimisations that we have made with our system. Future
-implementations of a VAD system may wish to build on this when developing their
-featuresets or future classifiers. Specifically during training on large data
-sets it is important to ensure that all feature transformations can be applied
-in a batch rather than serially to each instance. For example: the numpy
-library can do a batch FFT across an entire 2d data array instead of performing
-the FFT to each instance individually. This gained a large speedup, and we
-would definitely recommend the numpy library for anyone doing any further work
-in this space.
+good performance when working with representative data. We have documented some
+of the optimisations that we have made with our system. Future implementations
+of a VAD system may wish to build on this when developing their feature sets or
+future classifiers. Specifically during training on large data sets it is
+important to ensure that all feature transformations can be applied in a batch
+rather than serially to each instance. For example: the numpy library can do a
+batch FFT across an entire 2D data array. This is much faster than performing
+the FFT to each instance individually. This gave a large speedup and we would
+heartily recommend the numpy library for anyone doing any further work in this
+space.
 
 We feel that this implementation solves the main aim of this project which is
 to build a classifier capable of being integrated into existing VOIP and speech
 recognition systems. Our system varies from the traditional VAD system in that
 instead of merely separating background noise and human speech it takes into
-account a third category as part of its negative class which is keyboard noise.
-Based on the combination of features that we have which all are more
-discriminant than the baseline (> 50\% classification accuracy) we believe that
-this system is absolutely suitable for the application that we have chosen.
-This system is, however, not quite ready for production usage as a VAD system
-because it is trained against a relatively small sample size, and in the next
+account a third category as part of its negative class: keyboard noise.  Based
+on the combination of features that we have, all of which are more discriminant
+than the baseline (> 50\% classification accuracy), we believe that this system
+is absolutely suitable for the application that we have chosen.  This system
+is, however, not quite ready for production usage as a VAD system. This is
+because it is trained against a relatively small sample size. In the next
 section we will show that it completely degrades when presented with an unseen
 speaker. The solution to this problem is to train against many more speakers
-than we have trained against at the moment in order to get a more
-representative sample. This is very much future work and outside the scope of
-this project.
+than we have trained against: in order to get a more representative sample.
+This is very much future work and outside the scope of this project.
 
 The other aim for this project that we have achieved is building a portable
 dataset that other researchers may be able to use in order to build their own
-VAD system. Our dataset varies from others in that instead of containing
-continuous speech with some background noise that is mostly
-stationary\footnote{Stationary noise is noise that is continuous and of a roughly
-non-varying amplitude}, our dataset contains a large amount of noise impulses
-that occur in a non-repeating fashion due to keyboard actions and mouse actions
-which are not usually regularly timed. Some of the lack of regular timing is
-due to the fact that we recorded gamers whilst playing videogames, and the
-non-uniform random nature of the games makes for a good non-uniform sample of
-noise.
+VAD system.
 
-In the next section we evaluate some of the parts of the classifier that we
-have built that are easily varied with regards to both classification and
-processing performance, as well as looking at other classification systems that
-could possibly be used.
+Our dataset varies from others. It does not only contain speech samples and
+stationary background noise\footnote{Stationary noise is noise that is
+continuous and of a roughly non-varying amplitude}. It also contains a large
+amount of keyboard noise which is definitely neither stationary nor periodic.
+Some of the lack of periodicity is due to the fact that we recorded gamers
+whilst playing video games. The non-uniform random nature of the games makes
+for a good non-uniform sample of noise.
+
+In the next section we evaluate parts of our classifier that could be
+potentially changed. We perform these experiments in an attempt to see if there
+are any improvements that could be made to our implementation. We also perform
+this experiments with a view to finding any weaknesses that we currently have.
 
 %-----------------------------------
 %-----------------------------------
@@ -2033,50 +2085,51 @@ could possibly be used.
 \vspace{1cm}
 
 In this chapter we have given the results of a number of experiments that were
-performed over our classifier built in the previous chapter, with regards to
-various facets such as classification accuracy, performance and
-generalizability.
+performed over our classifier built in the previous chapter. We largely look at
+classification accuracy, performance and generalizability.
 
 \section{Sample Bits}
 
 In the technical background chapter we explained how each sample of audio is
 represented by a number of bits, more bits giving much higher fidelity audio
-recreation. We started with 16 bit audio samples, and in this experiment we
-investigate the affect of changing to 8 bits per sample instead. There are a
+sample. We started with 16 bit audio samples, and in this experiment we
+investigate the effect of changing to 8 bits per sample instead. There are a
 number of compelling reasons to make this change:
 
 \begin{enumerate}
 
     \item If the bits per sample can be reduced, the overall data rate going
-        through the system will be reduced, this may give performance benefits
-        such as being able to apply the feature transformations more quickly,
+        through the system will be reduced. This may give performance benefits
+        such as being able to apply the feature transformations more quickly
         and fitting more data in the cache lines. Particularly as VAD systems
         are used in embedded/mobile computing contexts, being able to work with
         smaller data sets is important.
 
     \item Additionally it means that the data set that we use can be more
         aggressively compressed for serving on the internet: we have built a
-        unique corpus that includes audio like laughter and keyboard noise
-        which were not found in the existing literature, and as such distributing
-        the data set more easily is a benefit.
+        unique corpus that includes audio like laughter and keyboard noise.
+        These samples were not found in the existing corpora, as such having
+        a data set that is more amenable to distribution is a benefit.
 
 \end{enumerate}
 
 We obviously expect to see a reduced classification accuracy from cutting out
-the lower 8 bits of audio information, but it is worth noting that unlike
-music, voice tends to have a fairly uniform amplitude, and so the minor
-variations may not have that much of an effect.
+the lower 8 bits of audio information. It is worth noting that unlike music,
+voice tends to have a fairly uniform amplitude. As such the minor variations
+may not have that much of an effect.
 
 To perform this experiment, we modified the part of the program that reads the
-audio from the files, and instead of just passing out the entire audio sample
-we masked out the lower 8 bits of the 16 bit sample, to get an initial
-indication of how much of an affect removing these bits would have on the
-accuracy of the classification system. In order to perform testing, we trained
-our classifier system on 50\% of the data in the training set, testing against
-the over 50\% and plotted the roc curves which are shown in \ref{fig:roc-bitcrush}
+audio from the files. Instead of just passing out the entire audio sample we
+masked out the lower 8 bits of the 16 bit sample. This is equivalent to
+removing these bits in terms of the effect on the accuracy of the
+classification system. In order to perform testing, we trained our classifier
+system on 50\% of the data in the training set, testing against the over 50\%
+and plotted the ROC curves which are shown in \ref{fig:roc-bitcrush}
 
 \begin{figure}
+    \center {
     \includegraphics[height=10cm]{roc_8bit.png}
+}
     \caption{ROC curves of the two classifiers}
     \label{fig:roc-bitcrush}
 \end{figure}
@@ -2084,33 +2137,34 @@ the over 50\% and plotted the roc curves which are shown in \ref{fig:roc-bitcrus
 This curve clearly shows that the accuracy of the two classifiers is nearly the
 same (98\% area under the ROC curve for the full bit samples, versus 97\% area
 under the ROC curve for 8 bit samples). This finding is useful, it means that
-the classifier can be trained on smaller data sets, reducing the overall size
-of the classification model that has to be loaded into memory: the full
-classifier takes 65 megabytes of memory, the reduced one takes only 40. This
-means that, for example, this system could be released on both PC and embedded
-contexts, with the slightly higher accuracy version being released on PC and
-the lower accuracy version released on the embedded/mobile devices. One of the
-main aims of this project is to release our corpus after we have completed, and
-it is important to note that reducing the size of the archive that we release
-will directly increase the number of people that it is available to. By halfing
-the bitrate (by reducing the number of bits per frame) we think this result is
-genuinely a good way to improve our ability to release the system, and improve
-performance.
+the classifier can be trained on lower bit rate datasets. This will reduce the
+overall size of the classification model that has to be loaded into memory: the
+full classifier takes 65 megabytes of memory, the reduced one takes only 40.
+This means that, for example, this system could be released on both PC and
+embedded contexts. The slightly higher accuracy version could be released on PC
+and the lower accuracy version released on the embedded/mobile devices. One of
+the main aims of this project is to release our corpus after we have completed.
+It is important to note that reducing the size of the archive that we release
+will directly increase the number of people that it is available to. By halving
+the bit rate we think this result is a good way to improve our ability to
+release the system, improve processing performance for a trade off of a small
+amount of accuracy.
 
 \section{Frame Rate}
 
 Changing the frame rate will naturally be expected to alter classifier accuracy
-and performance: firstly having to work with fewer frames will mean that the
-fourier transforms that we use are more sparse, and that we have to work over
-less data when computing features like the energy of the frame. This may also
-lead to a reduced classification accuracy. There is some reason to believe that
-this may not have as much impact as changing the bit rate of the classifier,
-this is due to the fact that human voice rarely goes above 4000Hz, with a
-nyquist limit of 8000Hz. Our audio samples being recorded at 48000Hz means
-that we may have vastly much more information than we need. In order to test
-this we initially started by taking half (24000Hz) and quarter (12000Hz) frame
-rates, to determine whether or not this would have a significant affect on
-classification accuracy. The results are shown in \ref{fig:roc-frameratecrush}.
+and performance. Firstly having to work with fewer frames will mean that the
+Fourier transforms that we use are more sparse. It also means that we have to
+work over less data when computing features like the energy of the frame. This
+may also lead to a reduced classification accuracy. There is some reason to
+believe that this may not have as much impact as changing the bit rate of the
+classifier, this is due to the fact that human voice rarely goes above 4000Hz,
+with a Nyquist limit of 8000Hz. Our audio samples being recorded at 48000Hz
+means that we may have vastly much more information than we need. In order to
+test this we initially started by taking half (24000Hz) and quarter (12000Hz)
+frame rates, to determine whether or not this would have a significant affect
+on classification accuracy. The results are shown in
+\ref{fig:roc-frameratecrush}.
 
 \begin{figure}
     \label{fig:roc-frameratecrush}
@@ -2118,27 +2172,35 @@ classification accuracy. The results are shown in \ref{fig:roc-frameratecrush}.
     \caption{ROC curves for various reduced framerates}
 \end{figure}
 
+As we can see, the results here are fairly significant. This result is somewhat
+counterintuitive. We believe that the explanation for this is that the keyboard
+noise contains much higher frequency information than voice. As such cutting
+off much of the higher frequency information will degrade our ability to
+separate the keyboard and voice classes. This could also be due to the fact
+that the features were constructed on 48000Hz audio and that they may need to
+be adapted for a lower frame rate.
+
 \section {Robustness to unseen data}
 
 \subsection{Unseen speakers}
+
 There are multiple ways we can pass unseen data to our classifier, having been
 trained on only 9 speakers there is a possibility that it will not work well
-with new people. To test this we recorded a sequence of audio containing pure
-speech/silence (no strong keyboard impulses) from an unseen, male, speaker of
-approximately 16.5 seconds in length. This gave us 1037 windows to classify
-against the unseen speaker. Whilst this is a short amount of audio, the
-labelling process for this being the limiting factor in our ability to create a
-large window of audio to classify against. The classifier was trained against
-the entire labelled training set that we created, and then classification was
-performed on each of the frames in the sequence provided. The confusion matrix
-for this experiment can be seen in \ref{table:confusion_unseen}, it should be
-noted that any 16ms window with total silence is discarded, so only 822
-actually got classified. From a visual inspection of the data in
-\ref{fig:waveform_unseen} we can see that noise regions were correctly classified, with
-only a few frames getting through, but most voice regions were classified
-noisily. In order to improve this system to generalize better to unseen
-speakers, we would require a much much larger sample of audio to draw from, but
-again hand labelling may significantly slow the process.
+with when presented with unseen speakers. To test this we recorded a sequence
+of audio. It contained pure speech/background noise with no strong keyboard
+impulses. The speaker was an unseen, male, speaker. The sequence was
+approximately approximately 16.5 seconds in length. This gave us 1037 windows
+to classify against the unseen speaker. The classifier was trained against the
+entire labelled training set that we created. We then performed classification
+on each of the frames in the unseen sequence. The confusion matrix for this
+experiment can be seen in \ref{table:confusion_unseen}. It should be noted that
+any 16ms window with total silence is discarded, so only 822 were sent to the
+classifier. From a visual inspection of the data in \ref{fig:waveform_unseen}
+we can see that noise regions were correctly classified, with only a few frames
+noise frames being transmitted. Most voice regions were classified noisily. In
+order to improve this system to generalize to unseen speakers, we would require
+a much much larger sample of audio to draw from. However, hand labelling may
+significantly slow the process.
 
 
 \begin{figure}
@@ -2157,34 +2219,41 @@ again hand labelling may significantly slow the process.
     classifying background noise, but not so good at classifying speech. This
     result is expected: it indicates that there is much more variation in the
     voice of an unseen speaker than the background noise of an unseen
-    configuration. This is due to the fact that addative background noise is
-    largely the same in any environment, and it being picked up is largely due
+    configuration. This is due to the fact that additive background noise is
+    largely the same in any environment. Its being picked up is largely due
     to the different sensitivities of microphones.
 
     \caption{Confusion matrix for unknown speaker}
 \end{figure}
 
-\begin{figure} \includegraphics[width=10cm]{peter.png}
+\begin{figure}
+    \center {
+
+        \includegraphics[width=10cm]{peter.png}
+    }
+
     \label{fig:waveform_unseen}
 
-    This diagram shows the waveform, class over
-    time, and post-processed waveform for a specific audio sequence. The middle
-    diagram, which shows class represents the classification of each specific
-    window over time, only showing class when a change occurs. We can see here
-    that the classification on an unseen speaker with unseen data is very very
-    noisy when in the speech class, and somewhat accurate in the noise class.
+    This diagram shows the waveform, class over time, and post-processed
+    waveform for a specific audio sequence. The middle diagram, which shows
+    class represents the classification of each specific window over time.
+    Class is only shown when a change in classifier output occurs. We can see
+    here that the classification on an unseen speaker with unseen data is very
+    noisy when in the speech class and somewhat accurate in the noise class.
     This suggests that the background noise detection in the classifier is
-    reasonably accurate, and the detector for voice is not so robust to unseen
-    voice data. A possible explanation for this is that there is significantly
-    more variation in voice than in background noise.
+    reasonably accurate. It also suggests that the detector for voice is not so
+    robust to unseen voice data. A possible explanation for this is that there
+    is significantly more variation in voice than in background noise.
+
     \caption{Classification diagram for unseen speaker}
+
 \end{figure}
 
-Critically we see that the system that we have trained is not immeidately
-robust to new speakers, this is important because whilst the experimental
-results that we have on the data that we do have labelled is relatively
-promising, this new approach must be tested under more data before it can be
-considered to be robust to multiple users.
+Critically we see that the system that we have trained is not immediately
+robust to new speakers. This is important because it means that our
+implementation, whilst giving good accuracy on speakers that it has seen, is
+not yet ready for unseen speakers. Our expectation is that if we provide more
+data to train against the system would be ready to handle unseen speakers.
 
 \subsection{Unseen data from seen speakers}
 
