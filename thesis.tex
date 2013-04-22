@@ -1285,14 +1285,14 @@ initial feature set we went with was:
     \item The energy of the 3500 to 4300Hz frequency band: implemented as a
         squared sum of the Fourier magnitude domain of the values in this
         frequency band. This feature was implemented due to it corresponding to
-        a peak in the average Fourier transform of one of the classes
+        a peak in the average Fourier transform of one of the classes.
 
     \item The energy of the 5400 to 6800Hz frequency band: implemented as
-        above, This feature was implemented due to it corresponding to a peak
+        above. This feature was implemented due to it corresponding to a peak
         in the average Fourier transform of one of the classes.
 
     \item The energy of the 1800 to 2700Hz frequency band: this corresponds to
-        the most dominant frequencies of voice according to the research
+        the most dominant frequencies of voice according to the research.
 
     \item The dominant frequency in the 300 to 5000Hz band: this is a wide band
         around the fundamental frequency of human voice, up to a very high
@@ -1337,19 +1337,21 @@ initial feature set we went with was:
 \end{enumerate}
 
 Features 2, 3, 4 and 7 are shown along with the complete Fourier amplitude
-domain in \ref{fig:frequencies}
+domain in \ref{fig:frequencies}.
 
 \begin{figure}
     \center{
-    \includegraphics[height=10cm]{frequencies.png} } The voice FFT is the top
+    \includegraphics[height=10cm]{frequencies.png} }
+
+    The voice FFT is the top
     subplot, and the noise FFT is the bottom subplot, with the frequency bands
     mentioned in 2,3,4 and 7 highlighted.
 
     \caption{Histogram of fourier domain for voice and noise classes}
-    \label{fig:frequencies} 
+    \label{fig:frequencies}
 \end{figure}
 
-As we can see these three frequency bands vary from each other between the two
+As we can see these four frequency bands vary from each other between the two
 classes. Specifically we can see that these frequency bands represent spikes in
 the noise class and are more flat in the voice class. Additionally we can see
 that the relative amplitude at these points is much lower for the noise
@@ -1359,6 +1361,7 @@ set. These give relatively high importances (specifically just over 11\% of the
 classification accuracy come from the 3 higher frequency bands).
 
 \begin{figure}
+    \center{
     \begin{tabular}{| l | l |}
     \hline
         Feature                                    & Normalized Importance \\ \hline
@@ -1388,8 +1391,11 @@ classification accuracy come from the 3 higher frequency bands).
         the sum of 30th-37th PSD components        & 0.038 \\
         zero crossings                             & 0.044  \\
     \hline
-    \label{table:importances}
+
     \end{tabular}
+}
+
+    \label{table:importances}
 \end{figure}
 
 The importances are computed by the random forest classifier during training
@@ -1448,7 +1454,7 @@ PSD components 0-3. This gave a slightly improved classification accuracy: 91\%
 in cross validation versus 90\% and so our updated feature set used the sum of
 the band instead of the single value.
 
-Whilst the majority of the heavy lifting of the classification is done by these
+The majority of the heavy lifting of the classification is done by these
 two features (accounting for correctly classifying 30\% of the samples). The
 remaining 70\% comes from the composite interaction of the remainder of our
 features. To get an understanding as to whether any of these features are not
@@ -1523,32 +1529,33 @@ they were in no way correlated.
 
 \begin{figure}
     \begin{tabular}{ |l|l| }
-        Table Heading & Label Number \\
-        1800 to 2700Hz Band energy & 1 \\
-        3500 to 4300Hz Band energy & 2 \\
-        5400 to 6800HZ Band Energy & 3 \\
-        Dominant Frequency in the 300 to 5000 Hz band & 4 \\
-        Energy of the window & 5 \\
-        Kurtosis of the fft & 6 \\
-        0 to 100Hz Band Energy & 7 \\
-        LPC Component 0 & 8 \\
-        LPC Component 1 & 9 \\
-        LPC Component 10 & 10 \\
-        LPC Component 11 & 11 \\
-        LPC Component 2 & 12 \\
-        LPC Component 3 & 13 \\
-        LPC Component 4 & 14 \\
-        LPC Component 5 & 15 \\
-        LPC Component 6 & 16 \\
-        LPC Component 7 & 17 \\
-        LPC Component 8 & 18 \\
-        LPC Component 9 & 19 \\
-        LPC Residual & 20 \\
-        Peak at 21st PSD component & 21 \\
-        PSD dominant component after third component & 22 \\
-        Sum of PSD components 0 through 3 & 23 \\
-        Sum of PSD components 30 through 36 & 24 \\
-        Zero Crossing rate 25 & \\
+        \hline
+        Table Heading & Label Number \\ \hline
+        1800 to 2700Hz Band energy & 1 \\ \hline
+        3500 to 4300Hz Band energy & 2 \\ \hline
+        5400 to 6800HZ Band Energy & 3 \\ \hline
+        Dominant Frequency in the 300 to 5000 Hz band & 4 \\ \hline
+        Energy of the window & 5 \\ \hline
+        Kurtosis of the fft & 6 \\ \hline
+        0 to 100Hz Band Energy & 7 \\ \hline
+        LPC Component 0 & 8 \\ \hline
+        LPC Component 1 & 9 \\ \hline
+        LPC Component 10 & 10 \\ \hline
+        LPC Component 11 & 11 \\ \hline
+        LPC Component 2 & 12 \\ \hline
+        LPC Component 3 & 13 \\ \hline
+        LPC Component 4 & 14 \\ \hline
+        LPC Component 5 & 15 \\ \hline
+        LPC Component 6 & 16 \\ \hline
+        LPC Component 7 & 17 \\ \hline
+        LPC Component 8 & 18 \\ \hline
+        LPC Component 9 & 19 \\ \hline
+        LPC Residual & 20 \\ \hline
+        Peak at 21st PSD component & 21 \\ \hline
+        PSD dominant component after third component & 22 \\ \hline
+        Sum of PSD components 0 through 3 & 23 \\ \hline
+        Sum of PSD components 30 through 36 & 24 \\ \hline
+        Zero Crossing rate & 25 \\ \hline
     \end{tabular}
     \caption{Table of features to integer key mappings}
     \label{fig:feature-keys}
@@ -1628,7 +1635,7 @@ for their rejection.
         poor predictive importance, even with low feature counts. With low
         feature counts this especially bad as predictive importance is
         normalized to sum to 1 regardless of the feature count. Specifically
-        the predictive importance was: 0.1\%, some 10$times$ smaller than even
+        the predictive importance was: 0.1\%, some 10 times smaller than even
         our worst predictive importances.
 
     \item The spectral flatness measure of the power spectrum: in the technical
@@ -1791,7 +1798,7 @@ PYPY\cite{pypy}. The JIT implementation, obviously, runs somewhat faster than
 the implementation with no JIT.
 
 In this section we document some of the places where optimisations had to be
-made. We made this optimisations as otherwise the system would not have a
+made. We made these optimisations as otherwise the system would not have a
 realistic application in the VAD space. Some of the optimisations are only
 useful for use during training over a large database. These optimisations act
 on batches of instances (either arrays of samples or Fourier transform
