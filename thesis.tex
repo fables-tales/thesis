@@ -238,13 +238,13 @@ I would also like to thank:
 
 \vspace{1cm}
 
-The term voice activity detection \footnote{sometimes referred to as voice endpoint
-location\cite{Tuske}} refers to the algorithms used to distinguish frames of
-audio that contain speech from those that contain background
-noise\cite{ramirez}. The motivation for this project is that we found, based on
-personal experience, that existing VAD algorithms struggle to efficiently
-distinguish the noise commonly associated with personal computers, such as typing and
-mouse clicks, from speech.
+The term voice activity detection \footnote{Sometimes referred to as voice
+endpoint location\cite{Tuske}} refers to the algorithms that are used to
+distinguish frames of audio that contain speech from those that contain
+background noise\cite{ramirez}. The motivation for this project is that we
+found, based on personal experience, that existing VAD algorithms struggle to
+efficiently distinguish the noise commonly associated with personal computers,
+such as typing and mouse clicks, from speech.
 
 \section{Applications}
 
@@ -261,49 +261,45 @@ Speech recognition systems are responsible for working out what is being said
 in a given sequence of audio. They must be robust to different speakers,
 environments, hesitation, stuttering and other human factors. It is often noted
 that these systems degrade rapidly in the presence of noise\cite{Moreno}.
-Increasingly with like Siri\texttrademark\cite{siri} (Apple's speech
+Increasingly with systems like Siri\texttrademark\cite{siri} (Apple's speech
 recognition system for iOS\texttrademark) people are using systems that require
-accurate detection of what is being said, in potentially noisy outdoor
-environments.
+accurate detection of what is being said. This mostly happens in potentially
+noisy outdoor environments.
 
 Speech recognition systems can have their accuracy improved\cite{shin} by
-employing VAD systems, which are used to locate speech endpoints. 
+employing VAD systems, which are used to locate speech endpoints. The speech
+endpoints are then passed into the speech recognition system. This means that
+the system only has to search the places that the VAD system has marked as
+containing speech, rather than the entire sequence of audio. If the VAD system
+is sufficiently sensitive it may also be able to accurately locate the pauses
+between words the user makes. This enables the speech recognition system to
+assume 1 or very few words will lie within each part of detected speech, this
+helps to improve speech detection accuracy.
 
-The speech endpoints are then passed into the speech recognition system. This
-means that the system only has to search the places that the VAD system has
-marked as containing speech, rather than the entire sequence of audio. If the
-VAD system is sufficiently sensitive it may also be able to accurately locate
-the pauses between words the user makes. This enables the speech recognition
-system to assume 1 or very few words will lie within each part of detected
-speech, which helps to improve speech detection accuracy.
-
-A motivating example for improving speech detection accuracy, by using an
+A motivating example for improving speech detection accuracy by using an
 improved VAD algorithm can be found in \cite{ramirez-2}. They built a
 specialised detector that improved over the G.729 ITU-T\cite{itut} standard.
 They tested against the well known Aurora\cite{aurora} speech recognition
 benchmark suite, using the same speech detector with the two different VAD
-algorithms. They found that, with an improved VAD algorithm, they could
-improve the number of words correctly recognized by 17\% in the best case.
+algorithms. They found that, with an improved VAD algorithm, they could improve
+the number of words correctly recognized by 17\% in the best case.
 
 In the context of this project we believe that our detector may be able to
-improve speech recognition through improved voice activity detection, but it is
-not our primary goal, as we foresee fewer circumstances where a user is going
-to require speech recognition whilst interacting with their computer, than we
-see cases where VOIP calls are occurring at the same time as someone is
-interacting with the keyboard and mouse inputs.
+improve speech recognition through improved voice activity detection. This is
+very much a secondary goal. We believe that, in a personal computing
+environment, it is more likely that a user is going to be using VOIP than
+speech detection.
 
-\clearpage
 \subsection{VOIP and Telephony}
 
-When used in a VOIP context, VAD systems are used to prevent the transmission
-of noise within a conversation. This is typically achieved by setting any
-frames detected as noise to have zero amplitude.  Often this is a component in
-a system that also includes: noise filtering and compression. The
-Mumble\cite{mumble} system for example includes both an amplitude and a
+When used in a VOIP context VAD systems are used to prevent the transmission of
+noise within a conversation. This is typically achieved by setting the
+amplitude of any frames that are detected as noise to zero. Often VAD is a
+component in a VOIP system that also includes: noise filtering and compression.
+The Mumble\cite{mumble} system, for example, includes both an amplitude and a
 signal-noise ratio based VAD. The output of the VAD is then passed into the
 CELT\cite{celt} codec. In Mumble the VAD system silences any frames detected as
-noise and CELT efficiently compresses the silence to ensure a bandwidth
-saving.
+noise and CELT efficiently compresses the silence to ensure a bandwidth saving.
 
 VAD algorithms allow for large bandwidth savings during both analogue
 telephone calls and VOIP calls. The reason for this bandwidth saving is that in
@@ -335,10 +331,10 @@ provide an even greater bandwidth saving.
 
 Seeing that both user experience can be improved, and that bandwidth savings
 can be achieved through the use of voice activity detection systems, the
-question is what can be done to improve these. The specific goal of this
-project is to build a voice activity detection system which is robust in the
-typical environment of a modern computer user. Typically these environments do
-have a low level of background noise. However, these environments do,
+question is what can be done to improve these VAD systems. The specific goal of
+this project is to build a voice activity detection system which is robust in
+the typical environment of a modern computer user. Typically these environments
+do have a low level of background noise. However, these environments do,
 typically, suffer from the problem of irregular high amplitude noise impulses
 that are caused by the user typing on a keyboard or clicking a mouse.
 
@@ -346,15 +342,14 @@ We believe that the problem in modern systems exist because most VAD algorithms
 are designed for noisy background environments\cite{shin}, but they are not
 designed for short, loud noise impulses. These noise impulses are common when a
 user is typing on their keyboard. There are two modern consumer VOIP systems
-that we used, both were found to transmit keyboard noise and mouse noise and
-transmit them as if they were someone speaking. The systems were:
-Mumble\cite{mumble}, a low latency system designed for gamers to communicate
-whilst playing with each other, and Skype\texttrademark\cite{skype}, a well
-known consumer VOIP solution designed for single or many person VOIP calls.
-Especially in the case of mumble it is essential that keyboard noise is
-filtered out, as gamers tend to be using their keyboards continuously whilst
-playing video-games. This noise could possibly drown out much of the real
-communication or cause annoyance.
+that we used, both were found to transmit keyboard noise and mouse noise  as if
+they were someone speaking. The systems were: Mumble\cite{mumble}, a low
+latency system designed for gamers to communicate whilst playing with each
+other, and Skype\texttrademark\cite{skype}, a well known consumer VOIP solution
+designed for single or many person VOIP calls.  Especially in the case of
+mumble it is essential that keyboard noise is filtered out, as gamers tend to
+be using their keyboards continuously whilst playing video-games. This noise
+could possibly drown out much of the real communication or cause annoyance.
 
 The high-level objective of this project is to build a robust voice activity
 detector system that can accurately distinguish voice from keyboard and mouse
@@ -372,8 +367,8 @@ specifically the concrete aims are:
     \item Design a feature representation for our VAD system that is amenable
         to a high classification accuracy.
 
-    \item Work to develop own algorithm based on machine learning techniques,
-        using common features from literature
+    \item Work to develop our own algorithm based on machine learning
+        techniques and using common features from literature
 
     \item To, where necessary, optimise the implementation to ensure that it
         can train in an acceptable amount of time, and classify audio in real
@@ -416,7 +411,7 @@ the output of a VAD system is a single bit (1 or 0 for voice or any other noise
 detected). In a VAD system we take input from the microphone and then attempt
 to determine which of two classes we are in, corresponding to whether we
 should or should not transmit the audio further. We formulate this as a
-decision as is shown in \ref{eqn:decision 1}.
+decision as is shown in ~\ref{fig:decision1}.
 
 \begin{figure}
         \[ decision = \left\{ \begin{array}{ll}
@@ -429,8 +424,8 @@ decision as is shown in \ref{eqn:decision 1}.
                     noise\cite{sohn} and generally represents a very realistic model of most
                     environments in which human speech must be differentiated from background noise.
 
-                    \label{eqn:decision 1}
                     \caption{Decision model for most voice activity detectors}
+                    \label{fig:decision1}
 
 \end{figure}
 
@@ -449,19 +444,19 @@ The decision we have tried to model is stated in \ref{eqn:decision 2}
             0 & \mbox{if input like $n + k$: no speech present}\\
 
     \end{array} \right. \]
-            \label{eqn:decision 2}
             Where $k$ represents the keyboard noise component of the input.
             \caption{Decision model for our voice activity detector}
+            \label{eqn:decision 2}
 \end{figure}
 
-This problem definition is different to the classical VAD problem, for the
+This problem definition is different to the classical VAD problem for the
 reasons specified above. This is due to the highly non-stationary nature of
 keyboard noise. It is worth noting that this model is still entirely additive.
 This model is used in many of the papers we have referenced. We believe that
 this model accurately reflects our problem as the sources of noise should not
 destructively interfere with each other. It is, however, worth noting that an
 additive model does not take into account the phenomenon of clipping. Clipping
-can occur when the input level to the microphone exceeds it's limit. In this
+can occur when the input level to the microphone exceeds its limit. In this
 case the additive model breaks down, we did not encounter clipping in our
 experiments.
 
@@ -513,23 +508,23 @@ strong fundamental at 600HZ with strong harmonics at 1800HZ (3rd harmonic) and
     \center{
     \includegraphics[height=10cm]{harmonics.png}
 }
-    \label{img:harmonics}
     \caption{A demonstration of the harmonics of a fundamental frequency}
+    \label{img:harmonics}
 \end{figure}
 
 \begin{figure}
     \center{
     \includegraphics[height=10cm]{voder_spectrogram.jpg}
 }
-    \label{img:spectrogram}
     \caption{Spectrogram of voice harmonics with speech}
+    \label{img:spectrogram}
 \end{figure}
 
 \section{Existing Voice Activity Detection Techniques}
 
 Existing voice activity detection techniques fall into one of two categories.
 The algorithms are either threshold based, or use machine learning techniques.
-Threshold based algorithms use a number of parameters, from the audio being
+Threshold based algorithms use a number of parameters from the audio being
 transmitted. Each parameter is given a threshold (the noise/voice threshold). A
 decision over all the parameters is made, using the thresholds, as to whether
 the audio is or is not voice. In some systems the thresholds are static with
@@ -559,7 +554,7 @@ trying to decide between the voice and non-voice class.
 
 In both threshold based and machine learning based VAD systems a number of
 features are extracted from the raw audio. These features are used to build a
-representation of the audio that can: be used in the decision systems and is
+representation of the audio that can be used in the decision systems and is
 likely to easily distinguish speech from non-speech. In this section we
 investigate existing features that are used in models for voice activity
 detection, including those that were and were not used in our model.
@@ -581,7 +576,7 @@ energy of a window. The equation for energy is given in figure
 of a window}, this feature is used in
 \cite{shin}\cite{sakhnov}\cite{gokhun}\cite{haigh}\cite{atal} and \cite{sohn2}.
 The energy feature of a particular window of audio has been found to be
-significantly higher in frames that contain speech than background
+significantly better in frames that contain speech than background
 noise\cite{atal}. This parameter also forms different distributions for voiced
 and unvoiced speech. The energy values for voiced speech is typically
 significantly higher than those for unvoiced speech. In \cite{atal} they state
@@ -595,8 +590,8 @@ classifier. This feature was used in our system for classification.
 
 \begin{figure}
     $$Energy(x) = \sum_{i=0}^{length(x)}x(i)^2$$
-    \label{eqn:energy}
     \caption{Energy of a window x, where length(x) gives the number of individual
+    \label{eqn:energy}
     samples in x}
 \end{figure}
 
@@ -621,12 +616,13 @@ in our detector.
     $$ZeroCrossingRate(x) =
     \sum_{i=1}^{length(x)}abs(sign(x(i-1))-sign(x(i)))$$
 
-    \label{eqn:zero-crossing-rate}
 
     Where x is the signal, sign gives the sign (-1, 0 or 1) of a value and
     abs gives the absolute value of a value.
 
-    \caption{Zero crossing rate of a frame} \end{figure}
+    \caption{Zero crossing rate of a frame}
+    \label{eqn:zero-crossing-rate}
+\end{figure}
 
 \subsubsection{Other features from existing systems}
 
@@ -658,7 +654,7 @@ VAD, stating that this feature requires a very high degree of periodicity
 accurate classification.
 
 \begin{figure}
-    $$PowerCepstrum(f)=\mathcal{F}^{-1}\{\mbox{log}(\mathcal{F}\{ f(t) \}|^2)\}|^2$$
+    $$PowerCepstrum(f)=|\mathcal{F}^{-1}\{\mbox{log}(|\mathcal{F}\{ f(t) \}|^2)\}|^2$$
     \caption{Definition of a power cepstrum. $f$ is our
     signal function, $\mathcal{F}$ is the Fourier transform function. $|a|$}
     \label{eqn:power-cepstrum}
@@ -680,7 +676,7 @@ frequency component of the signal. This corresponds to the highest peak in the
 Fourier transform of the signal and is defined in \ref{eqn:dom-freq}. The
 authors of the paper observed that this feature was helpful in discriminating
 speech and silence frames. We observed problems with this feature due to the
-nature of our windowing system which are discussed in \ref{chap:execution}. The
+nature of our windowing system which are discussed in chapter \ref{chap:execution}. The
 accuracy of this feature is reported in \cite{moattar} to have a greater than
 80\% accuracy under even noisy conditions. The main caveat that they point out
 with this feature, that the background noise must be in someway regular, does
@@ -794,8 +790,8 @@ is shown in Figure \ref{fig:decision-tree}.
         \includegraphics[height=10cm]{decision_tree.png}
     }
 
-    \label{fig:decision-tree}
     \caption{An example decision tree kindly provided by Wikipedia}
+    \label{fig:decision-tree}
 \end{figure}
 
 Regression trees are used when the output is not a single class but instead
@@ -834,8 +830,8 @@ classification accuracy. An example decision stump is shown in Figure
 }
 
 
-    \label{fig:decision-stump}
     \caption{An example decision stump kindly provided by Wikipedia}
+    \label{fig:decision-stump}
 \end{figure}
 
 \subsection{Adaboost}
@@ -911,8 +907,8 @@ in the presence of noise within the data set TODO: add citation here.
     classification error at each step, that is at every step the overall
     classification error on the training set will go down rather than up.
 
-    \label{pseudo:adaboost}
     \caption{Adaboost training psuedocode and explanation}
+    \label{pseudo:adaboost}
 
 \end{figure}
 \footnotetext{Roulette wheel selection is an algorithm which
@@ -965,7 +961,6 @@ boundaries for random forests are a lot noisier around noisy data than the
 other classification algorithms.
 
 \begin{figure}
-    \label{fig:comparison}
     \center{
         \includegraphics[width=13cm]{classifier_comparison.png}
     }
@@ -978,6 +973,8 @@ other classification algorithms.
     ensemble methods have internal classifiers that disagree. The decision tree
     always has block color as it gives a single class as an output rather than
     a probability
+
+    \label{fig:comparison}
 
 \end{figure}
 
@@ -1042,11 +1039,11 @@ were not transmitted when the user was speaking, so our system will naturally
 fall to the lax threshold rather than the strict threshold.
 
 \begin{figure}
-    \label{fig:roc-example}
     \begin{center}
         \includegraphics[height=10cm]{roc_example.png}
     \end{center}
     \caption{An example ROC curve}
+    \label{fig:roc-example}
 \end{figure}
 
 The area under the ROC curve is a measure of the predictive power of the
@@ -1145,7 +1142,7 @@ An example waveform with a contiguous region of 2.6 seconds, followed by a
 200ms region, the shortest region of homogeneous class, is given in figure
 \ref{img:labelling_example}.
 
-This script allowed for background noise to be separated from both: sharp
+This script allowed for background noise to be separated from both sharp
 keyboard impulses and people speaking. The user was then interactively asked to
 label the audio by hand. In addition to the interactive labelling windows of
 total silence were simply given a homogeneous background noise
@@ -1171,15 +1168,15 @@ that we labelled. Specifically we have just over an hour of labelled audio,
 split amongst all but one of our speakers (one of the males). The distribution
 of labelled data amongst the various participants can be seen in figure
 \ref{img:speaker_distribution}. The dominant speaker, speaker 7, is the
-recording speaker this speaker was present in every recording session. Speaker
+recording speaker, this speaker was present in every recording session. Speaker
 3 is the female speaker and forms a relatively large part of the data set.
 
 \begin{figure}
     \center{
         \includegraphics[height=10cm]{speaker.png}
     }
-    \label{img:speaker_distribution}
     \caption{Distribution of speakers in the labelled dataset}
+    \label{img:speaker_distribution}
 \end{figure}
 
 \begin{figure}
@@ -1187,17 +1184,17 @@ recording speaker this speaker was present in every recording session. Speaker
         \includegraphics[width=8cm]{labelling1.png}
         \includegraphics[width=8cm]{labelling2.png}
     }
-    \label{img:labelling_example}
     \caption{Example of contiguous and short region in simple labelling system}
+    \label{img:labelling_example}
 \end{figure}
 
 \section{Building the classifier}
 
 From the start we used the Random Forest classifier discussed in section
-\ref{section:random-forest}, this is due to both familiarity, and availability.
+\ref{section:random-forest}, this is due to both familiarity and availability.
 Specifically we took an off the shelf implementation from the
 scikit-learn\cite{sklearn} Python library. This library was chosen due to its
-general popularity and the author's familiarity with python. Once the
+general popularity and the author's familiarity with Python. Once the
 classifier had been chosen we decided to classify on windows of 16ms. This
 window length was chosen because it is used in gaming applications as the
 target frame rate for any on screen graphics. This frame rate corresponds to 60
@@ -1342,12 +1339,14 @@ initial feature set we went with was:
 Features 2, 3, 4 and 7 are shown along with the complete Fourier amplitude
 domain in \ref{fig:frequencies}
 
-\begin{figure} \label{fig:frequencies} \center{
+\begin{figure}
+    \center{
     \includegraphics[height=10cm]{frequencies.png} } The voice FFT is the top
     subplot, and the noise FFT is the bottom subplot, with the frequency bands
     mentioned in 2,3,4 and 7 highlighted.
 
     \caption{Histogram of fourier domain for voice and noise classes}
+    \label{fig:frequencies} 
 \end{figure}
 
 As we can see these three frequency bands vary from each other between the two
@@ -1360,7 +1359,6 @@ set. These give relatively high importances (specifically just over 11\% of the
 classification accuracy come from the 3 higher frequency bands).
 
 \begin{figure}
-    \label{table:importances}
     \begin{tabular}{| l | l |}
     \hline
         Feature                                    & Normalized Importance \\ \hline
@@ -1390,6 +1388,7 @@ classification accuracy come from the 3 higher frequency bands).
         the sum of 30th-37th PSD components        & 0.038 \\
         zero crossings                             & 0.044  \\
     \hline
+    \label{table:importances}
     \end{tabular}
 \end{figure}
 
@@ -2167,9 +2166,9 @@ on classification accuracy. The results are shown in
 \ref{fig:roc-frameratecrush}.
 
 \begin{figure}
-    \label{fig:roc-frameratecrush}
     \includegraphics[width=15cm]{roc_framerates.png}
     \caption{ROC curves for various reduced framerates}
+    \label{fig:roc-frameratecrush}
 \end{figure}
 
 As we can see, the results here are fairly significant. This result is somewhat
@@ -2204,7 +2203,6 @@ significantly slow the process.
 
 
 \begin{figure}
-    \label{table:confusion_unseen}
     \begin{center}
         \begin{tabular}{| l | l | l |}
             \hline
@@ -2224,6 +2222,7 @@ significantly slow the process.
     to the different sensitivities of microphones.
 
     \caption{Confusion matrix for unknown speaker}
+    \label{table:confusion_unseen}
 \end{figure}
 
 \begin{figure}
@@ -2232,7 +2231,6 @@ significantly slow the process.
         \includegraphics[width=10cm]{peter.png}
     }
 
-    \label{fig:waveform_unseen}
 
     This diagram shows the waveform, class over time, and post-processed
     waveform for a specific audio sequence. The middle diagram, which shows
@@ -2246,6 +2244,7 @@ significantly slow the process.
     is significantly more variation in voice than in background noise.
 
     \caption{Classification diagram for unseen speaker}
+    \label{fig:waveform_unseen}
 
 \end{figure}
 
@@ -2277,9 +2276,9 @@ background noise being detected accurately. The classification diagram can be
 seen in \ref{fig:ultimation}.
 
 \begin{figure}
-    \label{fig:ultimation}
     \includegraphics[width=10cm]{ultimation.png}
     \caption{Classification diagram for unseen data from a seen speaker}
+    \label{fig:ultimation}
 \end{figure}
 
 This shows us that firstly, we have built a system that is relatively robust to
@@ -2318,13 +2317,12 @@ by training the classifiers on half of the data that we have available and
 using the other half as unseen testing examples.
 
 \begin{figure}
-    \label{fig:multiclass-roc}
     \includegraphics[width=10cm]{roc_different.png}
     \caption{ROC curves of different classifiers}
+    \label{fig:multiclass-roc}
 \end{figure}
 
 \begin{figure}
-    \label{fig:multiclass-confusion}
 
     \begin{tabular}{|l||l|l|}
         \hline
@@ -2372,93 +2370,104 @@ using the other half as unseen testing examples.
     \vspace{0.75cm}
 
     \caption{Confusion matrices for different classifiers}
+    \label{fig:multiclass-confusion}
 
 \end{figure}
 
 The reason this experiment is important is that if we can achieve a better
 classification accuracy, or classification performance in time/memory with any
-of these systems, then it is worth noting. The first thing we note is that the
-Random Forest gives the best classification rate by some measure, followed by
-the Gradient Boosted Regression Trees algorithm. This does not contravene
-expectations as these methods both use a large ensemble of classifiers.
-Specifically for both classifiers we trained 100 trees.
+of these systems, then using that classifier would be preferable. The first
+thing we note is that the Random Forest gives the best classification rate by
+some measure and is followed by the Gradient Boosted Regression Trees
+algorithm. This does not contravene expectations as these methods both use a
+large ensemble of classifiers. Specifically for both ensemble classifiers we
+trained using 100 trees.
 
 What is more interesting is perhaps that the decision tree classifier achieves
-a higher raw classification accuracy than all the algorithms, apart from the
+a higher raw classification accuracy than all the algorithms apart from the
 decision forest, but the decision tree algorithm has a lower area under the ROC
 curve. This is because the classifier implementation that we used for the
 Decision Tree does not provide output probabilities but rather a ${0,1}$
 discrete classification. This means that its potentially more accurate
 classification suffers under the ROC curve metric. This is because it must be
 linearly interpolated to the (0,0) and (1,1) points from its actual
-classification output. By comparison we can see that this metric favours the
-lower accuracy five nearest and three nearest neighbor classifiers because they
-return continuous predictions instead of discrete output.
+classification output. By comparison we can see that the ROC AUC metric favours
+the lower accuracy five nearest and three nearest neighbor classifiers because
+they return continuous predictions instead of discrete output.
 
-However, if we look at the confusion matrices of these 4 classifiers we can see
+If we look at the confusion matrices of these 4 classifiers we can see
 that that the decision tree actually gives a much better overall classification
 rate than the five nearest neighbor. These are all important factors to
-consider when considering which implementation to use. For example the GBRT
-implementation classifes about twice as fast as the random forest
-implementation (0.47 seconds versus 0.26 seconds), but has a somewhat lower
+consider when deciding which classifier to use. For example the GBRT
+implementation classifies about twice as fast as the random forest
+implementation (0.47 seconds versus 0.26 seconds) and has a somewhat lower
 accuracy.
 
 From this we can, however, immediately discard the 3 nearest and 5 nearest
 neighbor classifiers, they take both the longest to classify (18 seconds
-respectively for 320 seconds of audio) and give the lowest training accuracy.
-Whilst 18 seconds for 320 may seem like a reasonable time, we envisage this
-system sitting in amongst many other components of a VOIP stack, and
-introducing any latency may have an impact on user experience, and certainly
-the more latent any particular component is, the more optimised the other
-components have to be.
+respectively to classify 320 seconds of audio) and give the lowest
+classification accuracy. 18 seconds for 320 may seem like reasonable
+performance. We envisage this system sitting in amongst many other components
+of a VOIP stack and introducing any latency may have an impact on user
+experience. Certainly the more latent any particular component is, the more
+optimised the other components have to be.
 
 All three tree implementations run in under a second with the decision tree
 algorithm running in 0.12 seconds, the GBRT running in 0.26 and the Random
 forest running in 0.47 seconds. All of these implementations have a very high
-classification rate and classification speed and any of them could be used for
-a real time system. The result of the Random  Forest running more slowly than
-the GBRT is somewhat counterintuitive because our Random Forest runs in
-parallel, it performed more slowly in both multithreaded and non-multithreaded
-modes, so we assume that something about the reudction of the classifier voting
+classification accuracy and classification speed, and any of them could be used
+for a real time system. The result of the Random Forest running more slowly
+than the GBRT is somewhat counterintuitive because our Random Forest runs in
+parallel. It performed more slowly in both multiprocessing and serial
+modes, so we assume that something about the reduction of the classifier voting
 takes longer than pushing an example through the decision chain in the GBRT.
 The authors' recommendation would be to use the decision forest implementation
-because it is both the most accurate overall, and in the far left of the ROC
-curve (most lax, fewest false negatives).
+because it is both the most accurate overall, has the best area under the ROC
+curve and it has a very high performance.
 
 \section{Varying the number of estimators in the ensemble}
 
-The random forest classifier takes two parameters, aside from the actual
-instances used as examples. These parameters are the number of trees to train
-and the maximum depth to train the trees to. In this section we investigate the
-affect on classification accuracy of training more trees. We explicitly do not
-investigate processing performance of the classifier as the relationship between
-number of estimators and performance is essentially linear.
+The random forest classifier takes two parameters. These parameters are the
+number of trees to train and the maximum depth to which to train the trees. In this
+section we investigate the effect on classification accuracy of training more
+trees. We explicitly do not investigate processing performance of the
+classifier as the relationship between number of estimators and performance is
+essentially linear.
 
 In order to perform this experiment we used the same 50\% training, 50\% test
-split that we used before, and trained with 500 trees, and then 100 through 10
-in steps of 5. The reason for the 500 trees is to see whether having a huge number
-of extra trees helps, or is generally overfitting. All the other tests are merely
-designed to see if 100 is a reasonable choice.
+split that was used before. The system was trained with 500 trees, as well as
+100 through 10 trees in steps of 5. The reason for training 500 trees is to see
+whether having a huge number of extra trees helps. Generally speaking the more
+highly trained the classifier is, the more overfit to the training set it may
+be. In addition to this there is a disadvantage to training more trees, in that
+the model will take up more memory and disk space, and take longer to process
+instances.  All the other tests are designed to see if 100 trees is a reasonable
+choice for our classifier.
 
-The results are shown in \ref{fig:roc-trees} as a curve of a count of the
-trees versus the ROC area under the curve metric for each classifier.
+
+The results of this experiment are reported by comparing the ROC AUC to the
+number of trees that were trained in the classifier, they are shown in
+\ref{fig:roc-trees}.
 
 \begin{figure}
-    \includegraphics[width=10cm]{roc_differing_trees.png}
+    \center{
+    \includegraphics[width=10cm]{roc_differing_trees.png}}
     \caption{ROC area under curve for different trees}
     \label{fig:roc-trees}
 \end{figure}
 
-500 is slightly more accurate than 95 with 0.97428 versus 0.97432 but at this
-point we are into diminishing returns and would not consider this to be a
-statistically significant difference.
+500 trees is slightly more accurate than 95 threes: 0.97428 for 95 versus
+0.7432 but at this point we are into diminishing returns. We would not consider
+this to be a significant difference in classification accuracy.
 
 An interesting observation we make with this graph is that in general the odd
-numbered counts of trees seem to cause peaks in accuracy when compared with their
-even numbered counterparts, for example the last 4 entries in the area under the
-curve metric are shown in \ref{table:roc_spike}.
+numbered counts of trees seem to cause peaks in accuracy when compared with
+their even numbered counterparts. An example of this is shown in
+\ref{table:roc_spike}, the table shows the last 4 points in the curve, with their ROC
+AUC scores.
 
 \begin{figure}
+    \center{
     \begin{tabular}{|l|l|}
         Number of trees & ROC AUC \\ \hline
         500             & 0.9743 \\ \hline
@@ -2467,21 +2476,22 @@ curve metric are shown in \ref{table:roc_spike}.
         90              & 0.9728 \\ \hline
         85              & 0.9737 \\ \hline
     \end{tabular}
+}
     \caption{ROC AUC metrics for various numbers of trees}
     \label{table:roc_spike}
 \end{figure}
 
-This result is somewhat counterintuitive as we would expect more trees to
-generally give a better classification result, it is possible that the "voting"
-process of the random forest favours odd numbers as it can break ties that way
-instead of making a guess. These differences are, however, small so to
-determine if they are truly important we decided to take the 10 fold cross
-validation results of the 100 trees and 95 trees classifiers and do a
-statistical test to determine if they are statistically significantly
-differently accurate. In order to do this we use the standard difference of
-two means t-test. The t test's results are shown in \ref{fig:t-test}.
+This result is somewhat counterintuitive as we would generally expect more
+trees to give a better classification result. It is possible that the "voting"
+process of the random forest favours odd numbers, as a way of breaking ties.
+These differences are so small that we decided to employ a t-test to determine
+the whether the differences were significant. The test was performed over the
+10 fold cross validation results of two classifiers, one trained with 100 trees
+and one trained with 95 trees. In order to do this we use the standard
+difference of two means test. The test's results are shown in \ref{fig:t-test}.
 
 \begin{figure}
+    \center {
     \begin{tabular}{|l|l|l|}
         \hline
         Number of trees & Mean accuracy in cross validation & StDev accuracy in cross validation \\ \hline
@@ -2495,6 +2505,7 @@ two means t-test. The t test's results are shown in \ref{fig:t-test}.
     The z score is:
 
     $$z=\frac{0.8900\times0.8902}{\sqrt{\frac{10\times0.025+10\times0.0012}{10+10-2}}\times\sqrt{\frac{10+10}{10\times10}}}=-0.0008$$
+}
 
     This is nowhere near high enough for us to conclude statistical significance and so we assume these come from the same distribution.
 
@@ -2502,34 +2513,35 @@ two means t-test. The t test's results are shown in \ref{fig:t-test}.
 
 \end{figure}
 
-Whilst it is interesting to note the spikeyness, the statistical test's results
-show that they are clearly not significant. Obviously more trees lead to a reduction
-in processing performance, as a tradeoff for classification accuracy. We think
-that using 100 trees seems like a sensible default, and it was also the number of
-trees the system was trained against, giving it the maximum chance for the highest
-classification accuracy as the features and classifier were built in conjunction.
+Whilst it is interesting to note the spikeyness, the t-test's results show that
+the spikes are not significant. Obviously, more trees lead to a reduction in
+processing performance as a tradeoff for classification accuracy.  We think
+that using 100 trees is a sensible default. It was also the number of trees the
+system implemented with. Given that the features were developed with this tree
+count and that no other tree count seems to be significantly better we would
+recommend the use of 100 trees, in a decision forest, with the features that we
+have.
 
 \section{Varying the maximum depth of the classifier}
 
-A commonly taught technique for reducing overfitting of a decision tree
+A commonly used technique for reducing overfitting of a decision tree
 classifier is to prune the trees to a specified
-depth\cite{Bramer:2002:PCT:646288.686755}. This works because by default
-decision trees train until all the nodes in the tree are of uniform class. This
-leads to a very high level of bias to the specific data set that the tree has
-been trained on. The random forest is somewhat robust to this problem because
-it trains many trees on different samples of the original data
-set\footnote{Random forests train each tree by sampling the original data set
-with replacement} as such it is common to train random forests to the maximum
+depth\cite{Bramer:2002:PCT:646288.686755}. This works because decision trees
+train until all the leaf nodes in the tree are of uniform class. This leads to
+a very high level of bias to the specific data set that the tree has been
+trained on. The random forest is somewhat robust to this problem because it
+trains many trees on different samples of the original data
+set.\footnote{Random forests train each tree by sampling the original data set
+with replacement} As such it is common to train random forests to the maximum
 depth, instead of pruning them.
 
-In this section we will investigate whether pruning our forests helps. For this
-experiment we used the 100 estimator tree that was used for the entire
-implementation section and depths were chosen between 10 and 1000 (in steps of
-50) and no pruning. Here we have reported the accuracy as a graph of area
-under the ROC curve versus depth to prune to. The maximum depth tree is not
-included in this graph as it is not clear what depth it is grown to, so instead
-it's result is reported in the figure alongside the graph. The results are shown
-in \ref{fig:roc-depths}.
+In this section we will investigate whether pruning our forest helps. For this
+experiment we used the 100 tree forest. This size of forest was used during
+implementation. Depths were chosen between 10 and 1000 (in steps of 50) and we
+also trained a completely unpruned forest. The graph of results shows a
+comparison of the pruning depth with the ROC AUC metric. The maximum depth tree
+is not included in this graph as it is not clear what depth it was grown to.
+The graph is shown in \ref{fig:roc-depths}.
 
 \begin{figure}
     \includegraphics[width=10cm]{roc_differing_depth.png}
@@ -2539,76 +2551,70 @@ in \ref{fig:roc-depths}.
 \end{figure}
 
 As we can see from this curve that after about 60 trees we hit the accuracy
-limit of around 0.98. Note that these were trained with a much larger amount of
-data than the previous tests which is why the accuracy jump probably occurred.
-Most importantly it's worth noting that there appears to be an accuracy limit
-around 98\% and regardless of how many trees are trained this accuracy result
-is reached. As such we conclude that varying the depth of the forest really
-does not make all that much difference to the classification. As such we would
-recommend either using a maximum depth of around 200 or training to the maximum
-depth. The justification for maximum depth being that that is what the feature
-set was trained with and as such they may be optimised together. The
-justification for 200 being that a smaller depth allows the classifier to train
-and classify more quickly which is important in our real time application.
+limit of around 0.98. It is worth noting that there appears to be an accuracy
+limit around 98\%, regardless of how deep we allow the classifier to train.
+From this we can conclude that classifier depth does not have a significant
+effect on classification accuracy. As such we would recommend either using a
+pruning depth of around 200 or not pruning. The justification for not pruning
+is that our features were trained with unpruned trees. The justification for
+pruning to a maximum depth of 200 is that the classifier will be of reduced
+size, which will enable faster classification times.
 
 \section{Comparison with existing VAD algorithms}
 
 In this section we compare our system to other VAD algorithms, for the most
-part we did not directly implement other VAD algorithms, so instead in this
+part we did not directly implement other VAD algorithms. Instead in this
 section we perform a comparative analysis on any accuracy values reported in
-the papers discussing the other algorithms, and also a comparison of our system
-against a system that implements only energy and zero crossing rate against our
-data set. Whilst we have noted that the zero crossing rate did have a very high
-level of individual predictive power (~70\%) it was given a relatively low
-importance by the random forest classifier that we used, indicating that it
-may not be a very good separator of our feature space.
+the papers discussing other algorithms. We compare our system against a system
+that implements energy and zero crossing rate. For this comparison we used our
+dataset for training and testing. Whilst we have noted that the zero crossing
+rate did have a very high level of individual predictive power (~70\%), it was
+given a relatively low importance by the random forest classifier.  This
+indicates that it may not be a very good separator for our dataset.
 
 In \cite{shin} they report their highest accuracy as a combination of all their
-features and using a classifier that passes both the next and previous frame
-into their classifier. Our system explicitly does not take any other frames
-than the current one. The reason for this design decision was that we felt that
-introducing an additional 16ms of latency into the audio processing would
-needlessly reduce the performance of the system. In other words, we felt that
-the possible classification rate gain that we would achieve by passing extra
-surrounding information in would not outweigh the cost of delaying the
-processing, as VAD systems live or die based on how fast they can process data.
-In \cite{shin} the specific accuracy they report with the 0dB noise level
-(equivalent to the spoken audio being as loud as the background noise) is
-87.73\%. Our highest classification accuracy that we were able to report in
-cross validation was 91\% and we also have noise attenuated to roughly the same
-0dB level.  We feel that the reason that our system is more accurate than the
-system in \cite{shin} is that we have used a very advanced machine learning
-algorithm (the random forest) instead of the decision tree, which is the system
-that was used in \cite{11}. Additionally we have more features: their system
-uses only 6 instead of our 25. It is worth noting that this may mean that the
-performance of our system is worse but we have experimentally determined that
-our system runs in faster than real time, and so this is not a concern.
+features. The features are used in a combination with a system that passes both
+the next and previous frame into their classifier. Our system explicitly does
+not take any other frames than the current one. The reason for this design
+decision was that we felt that introducing an additional 16ms of latency, into
+the audio processing, would needlessly reduce the performance of the system. In
+other words we felt that the possible classification rate gain that we would
+achieve would not outweigh the cost of delaying the processing. VAD systems
+live or die based on how fast they can process data. In \cite{shin} the
+specific accuracy they report with the 0dB noise level \footnote{A noise level
+of 0dB is equivalent to the spoken audio being as loud as the background noise}
+is 87.73\%. Our highest classification accuracy in cross validation was 91\%,
+we also have noise attenuated to roughly the same 0dB level.  We feel that the
+reason that our system is more accurate than the system in \cite{shin} is that
+we have used a very advanced machine learning algorithm (the random forest)
+instead of the decision tree, which is the system that was used in \cite{shin}.
+Additionally we have more features: their system uses only 6 features instead
+of 25.  It is worth noting that this may mean that the performance of our
+system is worse, we have however experimentally determined that our system runs
+in faster than real time, so this is not a concern.
 
-In \cite{moattar} they build a threshold based VAD system, and interestingly it
-is not tested against English speech, but rather Farsi. This means that a
-direct comparison of accuracies is not possible as we have not trained our
-system against a Farsi coprus. They report
-approximately\footnote{\cite{moattar} did not report 0dB attenuated noise
-accuracies and so figures here are reported by linearly interpolating between
-the 5dB and -5dB values.} 86\% accuracy for their system with white noise at
-0dB. This system is much more simple than the \cite{shin} system and so the
-accuracy is slightly degraded. It is worth noting that this system uses much
-more long term information than the \cite{shin} system specifically using
-approximately 30 frames of threshold averages to build the classification. This
-system, however, because of it's threshold based nature does not introduce 30
-frames of latency. This is because the previous frames before the system starts
-are assumed to be silence and are then updated as execution continues.
+In \cite{moattar} they built a threshold based VAD system, interestingly it was
+not tested against English speech but Farsi speech. This means that a direct
+comparison of accuracies is not possible as we have not trained our system
+against a Farsi corpus. They report approximately\footnote{\cite{moattar} did
+not report 0dB attenuated noise accuracies and so figures here are reported by
+linearly interpolating between the 5dB and -5dB values.} 86\% accuracy for
+their system with white noise at 0dB. This system is much more simple than the
+\cite{shin} system and so the accuracy is slightly degraded. It is worth noting
+that this system uses much more long term information than the \cite{shin}
+system, specifically using approximately 30 frames to make a decision. This
+system does not, however, introduce 30 frames of latency as it is threshold
+based.
 
-Our system compares favourably to these systems, and the reason we have done
-this investigation is to attempt to gain an understanding of the effects of
-noise on VAD systems in general. This result means that our system has somewhat
-improved on the state of the art, both by solving a new problem and by
-improving the generalised accuracy of some of the VAD systems from the
-research. There is one caveat here which is that, because our training set is
-relatively small the classification accuracy may get smaller as more data is
-added. The reason for this is that bigger data sets are generally more
-statistically sparse, and as such our classifier may be taking advantage of the
-small data set size to come to a very accurate classification.
+Our system compares favourably to these systems. The reason we have done this
+investigation is to attempt to gain an understanding of the effects of noise on
+VAD systems in general. This result means that our system has somewhat improved
+on the state of the art. We have solved a new problem and improved on the
+accuracy of most systems from the research. There is one caveat here: our
+training set is relatively small, and the classification accuracy may get worse
+as more data is added. The reason for this is that bigger data sets are
+generally more statistically sparse. As such our classifier may be taking
+advantage of the small data set size to come to a very accurate classification.
 
 %\noindent This chapter is intended to evaluate what you did.  The content is
 %highly topic-specific, but for many projects will have flavours of the
@@ -2634,8 +2640,6 @@ small data set size to come to a very accurate classification.
 \chapter{Conclusion}
 \label{chap:conclusion}
 
-{\bf A compulsory chapter, of roughly $2$ pages} 
-
 \section{Review of contributions}
 
 In this project we set out to build a new data set that would enable us to
@@ -2643,52 +2647,53 @@ build a voice activity detector that can accurately distinguish human speech
 from background noise and keyboard noise in personal computing environments. We
 also set out to actually build the detector itself. One of the aims of the
 project was exploring the new space of building a voice activity detector that
-is trained not only against continuous background noise of a roughly stationary
-amplitude, but investigating whether or not it is possible to build a detector
+is trained not only against continuous background noise, of a roughly stationary
+amplitude, but to investigate whether or not it is possible to build a detector
 that can robustly distinguish noise generated by common peripherals in noisy
-personal computing environments (such as mice and keyboards) from spoken voice.
+personal computing environments, such as mice and keyboards, from spoken voice.
 
 The dataset that we built is in a relatively portable form, 48000KHz 16 bit wav
-files, with a separate sqlite3 database holding the information about class
-with time. The size of the labelled dataset is relatively small (around 1 hour)
-with a total of 24 hours of audio in the dataset. We believe that a further
-contribution that could be made would be for someone to label the rest of the
-data set. The labelled data was very much not the primary goal of this project
-which is why a relatively small amount of the data set is actually labelled. We
-also investigated the possibility of reducing the size of this dataset with a
-view to publishing it in a format that might benefit other researchers. Based
-on our investigation halving the bits per sample of the audio from 16 bit to
-8 bit should have very little affect on future classification. Our feeling is
-that publishing this corpus may further help VAD research and so are very
-interested in publishing it.
+files, with a separate sqlite3 database holding the information about audio
+class and time. The size of the labelled dataset is relatively small (around 1
+hour) with a total of 24 hours of audio in the dataset. We believe that a
+further contribution that could be made would be for someone to label the rest
+of the data set. The labelled data was very much not the primary goal of this
+project which is why a relatively small amount of the data set is actually
+labelled. We also investigated the possibility of reducing the size of this
+dataset with a view to publishing it in a format that might benefit other
+researchers. Based on our investigation halving the bits per sample of the
+audio from 16 bit to 8 bit should have a very small effect on future
+classification. Our feeling is that publishing this corpus may further help VAD
+research and we are very interested in publishing it.
 
 One of the other main achievements of this project is building a classifier
 that capable of accurately distinguishing human speech from the background
-noise classes we have already mentioned at length. Our feeling is that our
-choice of classifier (the random forest) has hugely benefited the
-classification accuracy of this project enabling us to classify data with a
-very high degree of accuracy (some 4 percent over a previous piece of
-research\cite{shin}. This is a somewhat expected result from the use of more
-modern classification systems than older systems. We have also contributed a
-evaluation of which classification systems perform best over this dataset,
-showing that particularly nearest neighbor classifiers perform particularly
-badly on our problem set. Nearest neighbor classifiers work in a very similar
-way to the threshold based systems that are occasionally used for VAD systems,
-and as such we feel that more modern approaches to VAD systems should not use
-threshold or neighbor based approaches but more modern machine learning
-techniques such as decision trees or ensemble methods.
+noise classes, we have already discussed this at length. Our feeling is that
+our choice of classifier (the random forest) has hugely benefited the
+classification accuracy of this project. It has enabled us to classify data
+with a very high degree of accuracy, specifically some 4\% over the best
+classifier found in the background research\cite{shin}. This is a somewhat
+expected result from the use of advanced ensemble machine learning techniques.
+We have also contributed an evaluation of which classification systems perform
+best over this dataset. Particularly we have shown that nearest neighbor
+classifiers perform badly on our data set. Nearest neighbor classifiers work in
+a very similar way to the threshold based systems that are occasionally used
+for VAD systems. As such we feel that more modern approaches to VAD systems
+should not use threshold or neighbor based approaches but more modern machine
+learning techniques such as ensemble methods.
 
 We have also contributed some significant research into features that work well
-for VAD for this particular non-stationary noise problem. Specifically we have
-shown that the somewhat untraditional features of the very low frequency band
-(0-100Hz frequency domain energy band and components 0-3 of the PSD) provide
-very good classification accuracy. We have also shown that the more traditional
-features such as total window energy degrade under the presence of impact
-noises such as those that are commonly associated with the repeated impacts of
-someone typing on their keyboard. We feel that in particular our combination of
-25 features give a very good cross spectrum classification that makes our
-classifier amenable to many voice related problems as a number of our features
-are not targeted at our background noise class but rather our voice class.
+for VAD, in our non-stationary noise problem. Specifically we have shown that
+the somewhat untraditional features of the very low frequency band (0-100Hz
+frequency domain energy band and components 0-3 of the PSD) provide very good
+classification accuracy. We have also shown that the more traditional features
+such as window energy degrade, especially in the presence of impact noises such
+as those that are commonly associated with the repeated impacts of someone
+typing on their keyboard. We feel that the particular combination of 25
+features that we used give a very good cross spectrum classification that makes
+our classifier amenable to many voice related problems. This is because a
+number of our features are not targeted at our background noise class but
+rather our voice class.
 
 \section{Project Status}
 
@@ -2697,58 +2702,55 @@ technology needed for our VAD system. We had originally intended to implement a
 long time classifier, sometimes referred to as a hangover system. The idea of
 these systems is to smooth the transition between transmission and
 non-transmission classes. Our system does give a somewhat back and forth
-classification in somewhat ambiguous low amplitude voice frames. We believe
-that this could be the site of some future research and certainly based on
-some experience a median filter may be sufficient to simply remove this spotted
-noise.
+classification when it encounters ambiguous low amplitude voice frames. We
+believe that this could be the site of some future research, certainly based
+on some experience a median filter may be sufficient to simply remove this
+spotted noise.
 
 The remainder of our aims have been totally implemented. We have built a very
 simple script to enable us to label voice versus other types of noise both
-accurately and quickly. This is what enabled us to build our corpus to train
-the classifier against and we have used this to build our classifier. As
+accurately and quickly. This script is what enabled us to build our corpus to
+train the classifier against, we have used this to build our classifier. As
 outlined above we would like to see this corpus used by others to build future
-classifiers and more specifically to extend this corpus to build a system that
+classifiers, more specifically to extend this corpus to build a system that
 is robust to unseen speakers and potentially unseen languages.
 
 The major aim of this project was to build a classifier that has a high
 accuracy when classifying voice frames against the noise and keyboard frames.
 We feel that our implementation completely satisfies this aim, specifically the
-classifier that we have built can both be trained and classify in much faster
-than real time and the feature transformations that we use are also amenable
-to this.
+classifier that we have built runs in better than real time, and that the feature
+transformations that we have created also run in better than real time.
 
 Another minor aim of this project that we feel that we have achieved was to
 build a set of features that can be processed more easily than the entire audio
 window and also present a view of the data that is amenable to classification.
 Obviously during a machine learning project the classifier and the features are
-built hand in hand, and we feel that the end result here of a high
-classification accuracy could not have been achieved without the time that we
-spent designing our features.
+built hand in hand. Given that we have achieved a high level of classification
+accuracy we feel that our feature design has been very successful.
 
 \section{Future work}
 
 Much of the work of this thesis was in designing features that allow the
-classification system that we used to extract all of the variance of the data
-set that we had. The handcrafted feature design that we did was effectively a
-dimensionality reduction from 768 to 25 whilst presenting the data in a format
-that was amenable to machine learning algorithms. It is possible that instead
-of doing explicit feature design, we could merely pass the entire data in and
-use what is known as a "hash kernel"\cite{Weinberger}. This is a way of
-building a dimensionality reduction from a hash function. It may be possible to
-build a feature set from a hash kernel rather than by hand crafting. Future
-work could possibly involve building a VAD system that uses hashkernels instead
-of handcrafted features which could be useful as this would remove future need
-to change features based on new types of audio.
+classification system to extract all of the variance of the data set. The
+handcrafted feature design was effectively a dimensionality reduction from 768
+to 25 whilst retaining much of the information in the data. It is possible that
+instead of doing explicit feature design, we could merely pass the entire data
+to what is known as a "hash kernel"\cite{Weinberger}. This is a way of building
+a dimensionality reduction from a hash function. It may be possible to build a
+feature set from a hash kernel rather than by hand crafting. Future work could
+possibly involve building a VAD system that uses hashkernels instead of
+handcrafted features. This may be useful because the current features may not
+solve future problems: a hashkernel would contain all of the information needed
+and as such would be robust to future problems.
 
-The other significant piece of future work that we would like to see is the
-taking forward of this admittedly prototypical system for use in an actual
-production application. This project was born out of frustration with existing
-VAD systems detecting keyboard impulses as actual voice and as such the
-integration of this system with either the skype or mumble systems would be
-amazing to see. Before this can happen the corpus that we created would need to
-be expanded to include many different speakers including more females and more
-than one language (English). Based on all of our analysis though we see no
-reason why this shouldn't be possible.
+In the future we would also like to see this prototypical system taken forward
+to be used in a production environment. This project was born out of
+frustration with existing VAD systems detecting keyboard impulses as actual
+voice. As such the integration of this system with either the Skype or Mumble
+systems would be an awe inspiring advancement. Before this can happen the
+corpus that we created would need to be expanded to include many different
+speakers including more females and more than one language (English). Based on
+all of our analysis though we see no reason why this shouldn't be possible.
 
 In conclusion: we feel that this system has been implemented effectively
 solving a practical problem that exists in the landscape of personal computing.
@@ -2810,25 +2812,6 @@ this paper and we feel that our implementation is a success.
 % the associated macro, LaTeX manages them appropriatly.
 
 \appendix
-
-\chapter{An Example Appendix}
-\label{appx:example}
-
-Content which is not central to, but may enhance the thesis can be
-included in one or more appendices; examples include, but are not 
-limited to
-
-\begin{itemize}
-\item lengthy mathematical proofs, numerical or graphical results
-      which are summarised in the main body,
-\item sample or example calculations, 
-      and
-\item results of user studies or questionnaires.
-\end{itemize}
-
-\noindent
-Note that in line with most research conferences, the marking panel 
-is not obliged to read such appendices.
 
 % =============================================================================
 
