@@ -1828,9 +1828,10 @@ like Python the speed of development far outweighs the performance cost.
 One of the first advantages that reducing the bit rate gave was: computing the
 Fourier transform and power spectral densities of the audio happened much more
 quickly. When working with a non-trivial amount of data (approximately an hour)
-this makes an appreciable time saving. Specifically we found that the saving
-was approximately 50\% of the time. We assume this is because we were able to
-pack the integers into 16 bit integers and numpy uses sse vector operations.
+this makes an appreciable time saving. Specifically we found that the time
+saving was approximately 50\%, when compared with originally processing these
+features. We assume this is because we were able to pack the integers into 16
+bits and numpy uses SSE vector operations.
 
 Another advantage that this gave was that the classifier was able to train more
 quickly. The reason for this is obvious when looking at the specifics of how
@@ -1848,9 +1849,7 @@ transforms that was taking by far the longest to execute was the zero crossing
 rate feature transformation. The reason for this was that in Python iterating
 through each element of the audio arrays took an appreciable amount of time.
 
-The Python as it stood then is given in
-
-\ref{list:zcr-slow}.
+The Python as it stood then is given in \ref{list:zcr-slow}.
 
 
 \begin{lstlisting}[frame=single,caption=Original slow zero crossing rate implementation, label=list:zcr-slow]  % Start your code-block
@@ -1863,15 +1862,16 @@ The Python as it stood then is given in
                 sum += 1
 \end{lstlisting}
 
-This was optimised using the numpy library which was written in pure C, with
-optimised SSE instructions, this gave a huge speedup. On the order of taking 4
-hours to read the data set was reduced to only 10 minutes. For training numpy
-also allows one to apply transformations in a batch. This optimisation was not
-used for the ZCR feature. However it was used to perform the Fourier transform
-over the entire training set. This batch optimisation will not be used during
-real time classification: we can only apply transforms to frames as they come
-from the input device. For interest the numpy python code for the zero crossing
-rate feature is given in \ref{list:zcr-fast}.
+This was optimised using the numpy library which is written in pure C, with
+optimised SSE instructions, using this library gave a significant speedup. On
+the order of taking 4 hours to read the data set was reduced to only 10
+minutes. For training numpy also allows one to apply transformations in a
+batch. This optimisation was not used for the ZCR feature. However it was used
+to perform the Fourier transform over the entire training set. This batch
+optimisation will not be used during real time classification: we can only
+apply transforms to frames as they come from the input device. For interest the
+numpy python code for the zero crossing rate feature is given in
+\ref{list:zcr-fast}.
 
 \begin{lstlisting}[frame=single,caption=Numpy fast zero crossing rate implementation, label=list:zcr-fast]
     def zero_crossings(self, frame, fft):
@@ -1894,7 +1894,7 @@ The initial pure Python implementation of windowing was sufficiently fast with
 a small training set. It took only a few minutes to execute, however this
 performance degraded very much linearly with the amount of audio that had to be
 processed. When the data set grew to around an hour this was far too slow. The
-original Python code is given in \ref{list:window-slow}. Note that in this
+original Python code is given in \ref{list:windowing-slow}. Note that in this
 implementation the audio is padded with zeros until it meets a round number of
 window lengths. This choice could have potentially degraded accuracy, but
 seemed better than trying to read the rest of the audio from the file. If the
@@ -1937,13 +1937,13 @@ zeros to our samples array until it has a length that is evenly divisible by
 768. We can then reshape it into a 2 dimensional array that is 768 by the total
 number of windows. Numpy once again has a fast vector function to do this once
 the memory has been allocated. We took full advantage of that. This made the
-function run much more quickly.  We profiled the original implementation, and
-the sped up implementation and the results were astounding. Instead of showing
-up at the top of a profiled run, it disappeared straight to the bottom. The
-performance improvement was roughly a 2x speedup of the entire
+function run much more quickly.  We profiled the original implementation
+against the Numpy implementation. The results were impressive. Instead of
+showing up at the top of a profiled run, it disappeared straight to the bottom.
+The performance improvement was roughly a 2x speedup of the entire
 load/transform/classify system. On the full run this reduced the training time
 when combined with the zero crossing rate optimisation down to 5 minutes. The
-optimised numpy code is given in \ref{fig:windowing-fast}.
+optimised Numpy code is given in \ref{list:windowing-fast}.
 
 \begin{lstlisting}[frame=single,caption=Optimised windowing implementation, label=list:windowing-fast]
 
@@ -1977,7 +1977,7 @@ processes, with a very large data set this lead to memory problems. The
 solution to this whilst inelegant was effective: we increased the amount of RAM
 in the machine that we were training on to 32 gigabytes. This is noted as an
 implementation detail in case future research is done with either our data set
-or one of similar size: building features that effectively compress the size of
+or one of similar size: features that effectively compress the size of
 the data set whilst retaining much of the detail are very important when
 working with a large data set.
 
@@ -1997,9 +1997,9 @@ the some initial 4 hours that it took to perform these steps. We have reported
 with both hot and cold disk caches. The reason for this is to give some idea of
 the effect of storing all the data in the disk cache which is possible due to
 the large amount of ram on the machine. The results are in
-\ref{table:optimisation-results}. As we can see the hot disk cache helps a bit,
-which was very useful when repeatedly doing training runs as the classifier was
-being improved.
+\ref{table:optimisation-results}. As we can see the hot disk cache is
+beneficial, this was very useful when repeatedly training as the classifier
+design was being iterated upon.
 
 \begin{figure}
     \begin{tabular}{|l|l|}
@@ -2034,7 +2034,7 @@ data set.
 One of the critical requirements of this classification system is that it has
 good performance when working with representative data. We have documented some
 of the optimisations that we have made with our system. Future implementations
-of a VAD system may wish to build on this when developing their feature sets or
+of VAD systems may wish to build on this when developing their feature sets or
 future classifiers. Specifically during training on large data sets it is
 important to ensure that all feature transformations can be applied in a batch
 rather than serially to each instance. For example: the numpy library can do a
@@ -2043,28 +2043,27 @@ the FFT to each instance individually. This gave a large speedup and we would
 heartily recommend the numpy library for anyone doing any further work in this
 space.
 
-We feel that this implementation solves the main aim of this project which is
+We feel that this implementation solves the main aim of this project, which is
 to build a classifier capable of being integrated into existing VOIP and speech
 recognition systems. Our system varies from the traditional VAD system in that
 instead of merely separating background noise and human speech it takes into
 account a third category as part of its negative class: keyboard noise.  Based
 on the combination of features that we have, all of which are more discriminant
-than the baseline (> 50\% classification accuracy), we believe that this system
-is absolutely suitable for the application that we have chosen.  This system
-is, however, not quite ready for production usage as a VAD system. This is
-because it is trained against a relatively small sample size. In the next
+than the baseline ($>$ 50\% classification accuracy), we believe that this
+system is absolutely suitable for the application that we have chosen.  This
+system is, however, not quite ready for production usage as a VAD system. This
+is because it is trained against a relatively small sample size. In the next
 section we will show that it completely degrades when presented with an unseen
 speaker. The solution to this problem is to train against many more speakers
-than we have trained against: in order to get a more representative sample.
-This is very much future work and outside the scope of this project.
+than are present in our training set. This is will give a more representative
+sample of human speech. This is very much future work and outside the scope of
+this project.
 
 The other aim for this project that we have achieved is building a portable
 dataset that other researchers may be able to use in order to build their own
-VAD system.
-
-Our dataset varies from others. It does not only contain speech samples and
-stationary background noise\footnote{Stationary noise is noise that is
-continuous and of a roughly non-varying amplitude}. It also contains a large
+VAD system. Our dataset varies from others. It does not only contain speech
+samples and stationary background noise\footnote{Stationary noise is noise that
+is continuous and of a roughly non-varying amplitude}. It also contains a large
 amount of keyboard noise which is definitely neither stationary nor periodic.
 Some of the lack of periodicity is due to the fact that we recorded gamers
 whilst playing video games. The non-uniform random nature of the games makes
@@ -2124,13 +2123,14 @@ the lower 8 bits of audio information. It is worth noting that unlike music,
 voice tends to have a fairly uniform amplitude. As such the minor variations
 may not have that much of an effect.
 
-To perform this experiment, we modified the part of the program that reads the
+To perform this experiment we modified the part of the program that reads the
 audio from the files. Instead of just passing out the entire audio sample we
 masked out the lower 8 bits of the 16 bit sample. This is equivalent to
 removing these bits in terms of the effect on the accuracy of the
-classification system. In order to perform testing, we trained our classifier
-system on 50\% of the data in the training set, testing against the over 50\%
-and plotted the ROC curves which are shown in \ref{fig:roc-bitcrush}
+classification system. In order to perform testing we trained our classifier
+system on 50\% of the data in the training set and tested against the other
+50\%. The ROC curves of the results from this experiment are shown in
+\ref{fig:roc-bitcrush}.
 
 \begin{figure}
     \center {
@@ -2141,36 +2141,35 @@ and plotted the ROC curves which are shown in \ref{fig:roc-bitcrush}
 \end{figure}
 
 This curve clearly shows that the accuracy of the two classifiers is nearly the
-same (98\% area under the ROC curve for the full bit samples, versus 97\% area
-under the ROC curve for 8 bit samples). This finding is useful, it means that
-the classifier can be trained on lower bit rate datasets. This will reduce the
-overall size of the classification model that has to be loaded into memory: the
-full classifier takes 65 megabytes of memory, the reduced one takes only 40.
-This means that, for example, this system could be released on both PC and
-embedded contexts. The slightly higher accuracy version could be released on PC
-and the lower accuracy version released on the embedded/mobile devices. One of
-the main aims of this project is to release our corpus after we have completed.
-It is important to note that reducing the size of the archive that we release
-will directly increase the number of people that it is available to. By halving
-the bit rate we think this result is a good way to improve our ability to
-release the system, improve processing performance for a trade off of a small
-amount of accuracy.
+same. Specifically 98\% area under the ROC curve for the full bit samples
+versus 97\% area under the ROC curve for 8 bit samples. This finding is useful,
+it means that the classifier can be trained on lower bit rate datasets. This
+will reduce the overall size of the classification model that has to be loaded
+into memory: the full classifier takes 65 megabytes of memory, the reduced one
+takes only 40.  This means that, for example, this system could be released on
+both PC and embedded contexts. The slightly higher accuracy version could be
+released on PC and the lower accuracy version released on the embedded/mobile
+devices. One of the main aims of this project is to release our corpus after we
+have completed.  It is important to note that reducing the size of the archive
+that we release will directly increase the number of people that it is
+available to. By halving we think reducing the bitrate is a good way to improve
+our ability to release the system and improve processing performance, in exchange
+for a small amount of classification accuracy.
 
 \section{Frame Rate}
 
 Changing the frame rate will naturally be expected to alter classifier accuracy
-and performance. Firstly having to work with fewer frames will mean that the
-Fourier transforms that we use are more sparse. It also means that we have to
-work over less data when computing features like the energy of the frame. This
-may also lead to a reduced classification accuracy. There is some reason to
-believe that this may not have as much impact as changing the bit rate of the
-classifier, this is due to the fact that human voice rarely goes above 4000Hz,
-with a Nyquist limit of 8000Hz. Our audio samples being recorded at 48000Hz
-means that we may have vastly much more information than we need. In order to
-test this we initially started by taking half (24000Hz) and quarter (12000Hz)
-frame rates, to determine whether or not this would have a significant affect
-on classification accuracy. The results are shown in
-\ref{fig:roc-frameratecrush}.
+and performance. For example: reducing the frame rate will naturally reduce the
+resolution of the Fourier transform. It also means that we have to work over
+less data when computing features like the energy of the frame. This may also
+lead to a reduced classification accuracy. There is some reason to believe that
+this may not have as much impact as changing the bit rate of the classifier,
+this is due to the fact that human voice rarely goes above 4000Hz, with a
+Nyquist limit of 8000Hz. Our audio samples being recorded at 48000Hz means that
+we may have vastly much more information than we need. In order to test this we
+initially started by taking half (24000Hz) and quarter (12000Hz) frame rates,
+to determine whether or not this would have a significant affect on
+classification accuracy. The results are shown in \ref{fig:roc-frameratecrush}.
 
 \begin{figure}
     \includegraphics[width=15cm]{roc_framerates.png}
@@ -2190,22 +2189,24 @@ be adapted for a lower frame rate.
 
 \subsection{Unseen speakers}
 
-There are multiple ways we can pass unseen data to our classifier, having been
-trained on only 9 speakers there is a possibility that it will not work well
-with when presented with unseen speakers. To test this we recorded a sequence
-of audio. It contained pure speech/background noise with no strong keyboard
-impulses. The speaker was an unseen, male, speaker. The sequence was
-approximately approximately 16.5 seconds in length. This gave us 1037 windows
-to classify against the unseen speaker. The classifier was trained against the
-entire labelled training set that we created. We then performed classification
-on each of the frames in the unseen sequence. The confusion matrix for this
-experiment can be seen in \ref{table:confusion_unseen}. It should be noted that
-any 16ms window with total silence is discarded, so only 822 were sent to the
-classifier. From a visual inspection of the data in \ref{fig:waveform_unseen}
-we can see that noise regions were correctly classified, with only a few frames
-noise frames being transmitted. Most voice regions were classified noisily. In
-order to improve this system to generalize to unseen speakers, we would require
-a much much larger sample of audio to draw from. However, hand labelling may
+It is important to test our classifier with unseen data, these data are a good
+way to test possible future performance when the system is used in a production
+environment. The classifier system was only trained with 9 speakers. As such
+there is a possibility that it will not work well with when presented with
+unseen speakers. To test this we recorded a sequence of audio. It contained
+pure speech/background noise with no strong keyboard impulses. The speaker was
+an unseen, male, speaker. The sequence was approximately approximately 16.5
+seconds in length. This gave us 1037 windows to classify against the unseen
+speaker. The classifier was trained against the entire labelled training set
+that we created. We then performed classification on each of the frames in the
+unseen sequence. The confusion matrix for this experiment can be seen in
+\ref{table:confusion_unseen}. It should be noted that any 16ms window with
+total silence is discarded, so only 822 were sent to the classifier. From a
+visual inspection of the data in \ref{fig:waveform_unseen} we can see that
+noise regions were correctly classified, with only a few frames noise frames
+being transmitted. Most voice regions were classified noisily. In order to
+improve this system to generalize to unseen speakers we would require a much
+much larger sample of audio to draw from. However, hand labelling may
 significantly slow the process.
 
 
@@ -2225,8 +2226,8 @@ significantly slow the process.
     result is expected: it indicates that there is much more variation in the
     voice of an unseen speaker than the background noise of an unseen
     configuration. This is due to the fact that additive background noise is
-    largely the same in any environment. Its being picked up is largely due
-    to the different sensitivities of microphones.
+    largely the same in any environment. Background noise is picked up, in
+    different ways, due to the different sensitivities of microphones.
 
     \caption{Confusion matrix for unknown speaker}
     \label{table:confusion_unseen}
@@ -2266,10 +2267,11 @@ data to train against the system would be ready to handle unseen speakers.
 The next question that is important to answer is as to whether the classifier
 that we have built is robust to unseen data from seen speakers. If this is the
 case one could imagine an automated training scenario whereby the system trains
-itself, on the user using a push to talk key to indicate when they are
-speaking. This way the system can build samples in the voice class from the
-user interaction. After the end of the training period, however,
-the system must continue to be robust against unseen speech from the same user.
+itself. We would do this by having the user pushing a key to indicate when they
+are speaking, transmitting speech when the key is held. This way the system can
+build samples in the voice class from the user interaction. After the end of
+the training period, however, the system must continue to be robust against
+unseen speech from the same user.
 
 For this experiment we used approximately 10 seconds of audio from our sample
 data set, with a speaker that the system had already been trained against. This
@@ -2283,16 +2285,18 @@ background noise being detected accurately. The classification diagram can be
 seen in \ref{fig:ultimation}.
 
 \begin{figure}
+    \center{
     \includegraphics[width=10cm]{ultimation.png}
+}
     \caption{Classification diagram for unseen data from a seen speaker}
     \label{fig:ultimation}
 \end{figure}
 
-This shows us that firstly, we have built a system that is relatively robust to
-speakers that it has been seen before. Despite the fact that we haven't seen
-the specific speech data before. This is encouraging because it indicates that
-this system will work where the speaker has been seen before. More importantly,
-this indicates that the classifier has a very high level of sensitivity as it
+This shows us that, firstly, we have built a system that is relatively robust
+to speakers that have been seen. Despite the fact that we haven't seen the
+specific speech data before. This is encouraging because it indicates that this
+system will work where the speaker has been seen before. More importantly, this
+indicates that the classifier has a very high level of sensitivity as it
 accurately classified the two pauses within the overall speech.
 
 A possible problem that is brought up by this is that very quiet utterances
@@ -2331,6 +2335,7 @@ using the other half as unseen testing examples.
 
 \begin{figure}
 
+    \center{
     \begin{tabular}{|l||l|l|}
         \hline
         Random Forest      & Actually Positive & Actually Negative \\ \hline
@@ -2376,6 +2381,7 @@ using the other half as unseen testing examples.
 
     \vspace{0.75cm}
 
+}
     \caption{Confusion matrices for different classifiers}
     \label{fig:multiclass-confusion}
 
@@ -2446,10 +2452,10 @@ split that was used before. The system was trained with 500 trees, as well as
 100 through 10 trees in steps of 5. The reason for training 500 trees is to see
 whether having a huge number of extra trees helps. Generally speaking the more
 highly trained the classifier is, the more overfit to the training set it may
-be. In addition to this there is a disadvantage to training more trees, in that
-the model will take up more memory and disk space, and take longer to process
-instances.  All the other tests are designed to see if 100 trees is a reasonable
-choice for our classifier.
+be. In addition to this there is a disadvantage to training more trees: the
+model will take up more memory and disk space, and take longer to process
+instances. All other tree counts are used to help us determine if 100
+estimators is a reasonable choice of estimator count for our classifier.
 
 
 The results of this experiment are reported by comparing the ROC AUC to the
@@ -2463,7 +2469,7 @@ number of trees that were trained in the classifier, they are shown in
     \label{fig:roc-trees}
 \end{figure}
 
-500 trees is slightly more accurate than 95 threes: 0.97428 for 95 versus
+500 trees is slightly more accurate than 95 trees: 0.97428 for 95 versus
 0.7432 but at this point we are into diminishing returns. We would not consider
 this to be a significant difference in classification accuracy.
 
@@ -2476,6 +2482,7 @@ AUC scores.
 \begin{figure}
     \center{
     \begin{tabular}{|l|l|}
+        \hline
         Number of trees & ROC AUC \\ \hline
         500             & 0.9743 \\ \hline
         100             & 0.9724 \\ \hline
@@ -2524,10 +2531,10 @@ Whilst it is interesting to note the spikeyness, the t-test's results show that
 the spikes are not significant. Obviously, more trees lead to a reduction in
 processing performance as a tradeoff for classification accuracy.  We think
 that using 100 trees is a sensible default. It was also the number of trees the
-system implemented with. Given that the features were developed with this tree
-count and that no other tree count seems to be significantly better we would
-recommend the use of 100 trees, in a decision forest, with the features that we
-have.
+system implemented with.  We would definitely use this estimator count going
+forward. The reason for this is we designed our features with this estimator
+count. Additionally no other estimator count seems to give a better
+classification accuracy.
 
 \section{Varying the maximum depth of the classifier}
 
@@ -2543,12 +2550,12 @@ with replacement} As such it is common to train random forests to the maximum
 depth, instead of pruning them.
 
 In this section we will investigate whether pruning our forest helps. For this
-experiment we used the 100 tree forest. This size of forest was used during
-implementation. Depths were chosen between 10 and 1000 (in steps of 50) and we
-also trained a completely unpruned forest. The graph of results shows a
-comparison of the pruning depth with the ROC AUC metric. The maximum depth tree
-is not included in this graph as it is not clear what depth it was grown to.
-The graph is shown in \ref{fig:roc-depths}.
+experiment we used the 100 tree forest. This size of forest was used during the
+execution phase of this project. Depths were chosen between 10 and 1000 (in
+steps of 50) and we also trained a completely unpruned forest. The graph of
+results shows a comparison of the pruning depth with the ROC AUC metric. The
+maximum depth tree is not included in this graph as it is not clear what depth
+it was grown to.  The graph is shown in \ref{fig:roc-depths}.
 
 \begin{figure}
     \includegraphics[width=10cm]{roc_differing_depth.png}
@@ -2583,8 +2590,8 @@ In \cite{shin} they report their highest accuracy as a combination of all their
 features. The features are used in a combination with a system that passes both
 the next and previous frame into their classifier. Our system explicitly does
 not take any other frames than the current one. The reason for this design
-decision was that we felt that introducing an additional 16ms of latency, into
-the audio processing, would needlessly reduce the performance of the system. In
+decision was: we felt that introducing an additional 16ms of latency into the
+audio processing would needlessly reduce the performance of the system. In
 other words we felt that the possible classification rate gain that we would
 achieve would not outweigh the cost of delaying the processing. VAD systems
 live or die based on how fast they can process data. In \cite{shin} the
@@ -2593,12 +2600,12 @@ of 0dB is equivalent to the spoken audio being as loud as the background noise}
 is 87.73\%. Our highest classification accuracy in cross validation was 91\%,
 we also have noise attenuated to roughly the same 0dB level.  We feel that the
 reason that our system is more accurate than the system in \cite{shin} is that
-we have used a very advanced machine learning algorithm (the random forest)
-instead of the decision tree, which is the system that was used in \cite{shin}.
-Additionally we have more features: their system uses only 6 features instead
-of 25.  It is worth noting that this may mean that the performance of our
-system is worse, we have however experimentally determined that our system runs
-in faster than real time, so this is not a concern.
+we have used a very advanced machine learning algorithm, the random forest,
+instead of the decision tree. Additionally we have more features: their system
+uses only 6 features instead of 25. It is worth noting that this may mean that
+the performance of our system is worse, we have, however, experimentally
+determined that our system runs in faster than real time. We are not concerned
+with performance issues in our system.
 
 In \cite{moattar} they built a threshold based VAD system, interestingly it was
 not tested against English speech but Farsi speech. This means that a direct
@@ -2609,7 +2616,7 @@ linearly interpolating between the 5dB and -5dB values.} 86\% accuracy for
 their system with white noise at 0dB. This system is much more simple than the
 \cite{shin} system and so the accuracy is slightly degraded. It is worth noting
 that this system uses much more long term information than the \cite{shin}
-system, specifically using approximately 30 frames to make a decision. This
+system. Specifically it uses approximately 30 frames to make a decision. This
 system does not, however, introduce 30 frames of latency as it is threshold
 based.
 
@@ -2618,10 +2625,10 @@ investigation is to attempt to gain an understanding of the effects of noise on
 VAD systems in general. This result means that our system has somewhat improved
 on the state of the art. We have solved a new problem and improved on the
 accuracy of most systems from the research. There is one caveat here: our
-training set is relatively small, and the classification accuracy may get worse
-as more data is added. The reason for this is that bigger data sets are
-generally more statistically sparse. As such our classifier may be taking
-advantage of the small data set size to come to a very accurate classification.
+training set is relatively small, the classification accuracy may get worse as
+more data is added. The reason for this is that bigger data sets are generally
+more statistically sparse. As such our classifier may be taking advantage of
+the small data set size to come to a very accurate classification.
 
 %\noindent This chapter is intended to evaluate what you did.  The content is
 %highly topic-specific, but for many projects will have flavours of the
@@ -2649,29 +2656,34 @@ advantage of the small data set size to come to a very accurate classification.
 
 \section{Review of contributions}
 
-In this project we set out to build a new data set that would enable us to
-build a voice activity detector that can accurately distinguish human speech
-from background noise and keyboard noise in personal computing environments. We
-also set out to actually build the detector itself. One of the aims of the
-project was exploring the new space of building a voice activity detector that
-is trained not only against continuous background noise, of a roughly stationary
-amplitude, but to investigate whether or not it is possible to build a detector
-that can robustly distinguish noise generated by common peripherals in noisy
-personal computing environments, such as mice and keyboards, from spoken voice.
+In this project we set out to build a new data set for Voice Activity
+Detection.  The dataset to enabled us to build a voice activity detector that
+could accurately distinguish human speech from background noise.  Additionally
+we wanted to distinguish keyboard noise in personal computing environments. We
+also set out to actually build the detector itself.
+
+
+One of the aims of the project was to explore a new space in voice activity
+detection.  Specifically we wanted to be able to distinguish sudden impulses,
+as well as background noise of a roughly stationary amplitude. This breaks with
+the objectives of most detectors, which only attempt to differentiate
+background noise from speech. We wanted to build a system that could robustly
+distinguish speech from noise associated with common peripherals, such as mice
+and keyboards.
 
 The dataset that we built is in a relatively portable form, 48000KHz 16 bit wav
 files, with a separate sqlite3 database holding the information about audio
-class and time. The size of the labelled dataset is relatively small (around 1
-hour) with a total of 24 hours of audio in the dataset. We believe that a
+class and time. The size of the labelled dataset is relatively small, around 1
+hour, with a total of 24 hours of audio in the dataset. We believe that a
 further contribution that could be made would be for someone to label the rest
 of the data set. The labelled data was very much not the primary goal of this
-project which is why a relatively small amount of the data set is actually
+project, this is why a relatively small amount of the data set is actually
 labelled. We also investigated the possibility of reducing the size of this
-dataset with a view to publishing it in a format that might benefit other
-researchers. Based on our investigation halving the bits per sample of the
-audio from 16 bit to 8 bit should have a very small effect on future
-classification. Our feeling is that publishing this corpus may further help VAD
-research and we are very interested in publishing it.
+dataset with a view to publishing it, specifically in a format that might
+benefit other researchers. Based on our investigation: halving the bits per
+sample of the audio from 16 bit to 8 bit should have a very small effect on
+future classification. Our feeling is that publishing this corpus may further
+help VAD research and we are very interested in publishing it.
 
 One of the other main achievements of this project is building a classifier
 that capable of accurately distinguishing human speech from the background
@@ -2686,21 +2698,21 @@ best over this dataset. Particularly we have shown that nearest neighbor
 classifiers perform badly on our data set. Nearest neighbor classifiers work in
 a very similar way to the threshold based systems that are occasionally used
 for VAD systems. As such we feel that more modern approaches to VAD systems
-should not use threshold or neighbor based approaches but more modern machine
-learning techniques such as ensemble methods.
+should not use threshold or neighbor based approaches, instead favouring more
+modern machine learning techniques such as ensemble methods.
 
 We have also contributed some significant research into features that work well
-for VAD, in our non-stationary noise problem. Specifically we have shown that
-the somewhat untraditional features of the very low frequency band (0-100Hz
-frequency domain energy band and components 0-3 of the PSD) provide very good
-classification accuracy. We have also shown that the more traditional features
-such as window energy degrade, especially in the presence of impact noises such
-as those that are commonly associated with the repeated impacts of someone
-typing on their keyboard. We feel that the particular combination of 25
-features that we used give a very good cross spectrum classification that makes
-our classifier amenable to many voice related problems. This is because a
-number of our features are not targeted at our background noise class but
-rather our voice class.
+for VAD, our specific, non-stationary noise problem. Specifically we have shown
+that the somewhat untraditional features of the very low frequency band,
+0-100Hz frequency domain energy band and components 0-3 of the PSD, provide
+very good classification accuracy. We have also shown that the more traditional
+features such as window energy degrade in the presence of loud, sudden noises.
+Degradation of this feature was particularly noticeable with the presence of
+keyboard noise. We feel that the particular combination of 25 features that we
+used give a very good cross spectrum classification that makes our classifier
+amenable to many voice related problems. This is because a number of our
+features are not targeted at our background noise class but rather our voice
+class.
 
 \section{Project Status}
 
@@ -2710,45 +2722,49 @@ long time classifier, sometimes referred to as a hangover system. The idea of
 these systems is to smooth the transition between transmission and
 non-transmission classes. Our system does give a somewhat back and forth
 classification when it encounters ambiguous low amplitude voice frames. We
-believe that this could be the site of some future research, certainly based
-on some experience a median filter may be sufficient to simply remove this
-spotted noise.
+believe that this could be the site of some future research, certainly based on
+some experience a median filter may be sufficient to simply remove this spotted
+noise.
 
 The remainder of our aims have been totally implemented. We have built a very
-simple script to enable us to label voice versus other types of noise both
-accurately and quickly. This script is what enabled us to build our corpus to
-train the classifier against, we have used this to build our classifier. As
-outlined above we would like to see this corpus used by others to build future
-classifiers, more specifically to extend this corpus to build a system that
-is robust to unseen speakers and potentially unseen languages.
+simple script to enable us to label voice versus other types of noise, with the
+script we can do this both accurately and quickly. This script is what enabled
+us to build our corpus to train the classifier against, we have used this to
+build our classifier. As outlined above we would like to see this corpus used
+by others to build future classifiers, more specifically to extend this corpus
+to build a system that is robust to unseen speakers and potentially unseen
+languages.
 
 The major aim of this project was to build a classifier that has a high
 accuracy when classifying voice frames against the noise and keyboard frames.
 We feel that our implementation completely satisfies this aim, specifically the
-classifier that we have built runs in better than real time, and that the feature
-transformations that we have created also run in better than real time.
+classifier that we have built runs in better than real time. We also have shown
+that the feature transformations that we have created also run in better than
+real time.
 
-Another minor aim of this project that we feel that we have achieved was to
-build a set of features that can be processed more easily than the entire audio
-window and also present a view of the data that is amenable to classification.
-Obviously during a machine learning project the classifier and the features are
-built hand in hand. Given that we have achieved a high level of classification
-accuracy we feel that our feature design has been very successful.
+Another minor aim of this project that we have achieved was to build a set of
+features that can be processed more easily than the entire audio window.  It
+is, obviously, important that these features present a view of the data that is
+amenable to classification.  Obviously during a machine learning project the
+classifier and the features are built hand in hand. Given that we have achieved
+a high level of classification accuracy we feel that our feature design has
+been very successful.
 
 \section{Future work}
 
 Much of the work of this thesis was in designing features that allow the
 classification system to extract all of the variance of the data set. The
 handcrafted feature design was effectively a dimensionality reduction from 768
-to 25 whilst retaining much of the information in the data. It is possible that
-instead of doing explicit feature design, we could merely pass the entire data
-to what is known as a "hash kernel"\cite{Weinberger}. This is a way of building
-a dimensionality reduction from a hash function. It may be possible to build a
-feature set from a hash kernel rather than by hand crafting. Future work could
-possibly involve building a VAD system that uses hashkernels instead of
-handcrafted features. This may be useful because the current features may not
-solve future problems: a hashkernel would contain all of the information needed
-and as such would be robust to future problems.
+to 25. These features retain much of the information present in the raw audio
+data. It is possible that instead of doing explicit feature design we could
+pass the entire data set into to what is known as a "hash
+kernel"\cite{Weinberger}. This is a way of building a dimensionality reduction
+from a hash function. It may be possible to build a feature set from a hash
+kernel rather than by hand crafting. Future work could possibly involve
+building a VAD system that uses hash kernels instead of handcrafted features.
+This may be useful because the current features may not solve future problems:
+a hash kernel would contain all of the information needed and as such would be
+robust to future problems.
 
 In the future we would also like to see this prototypical system taken forward
 to be used in a production environment. This project was born out of
@@ -2757,12 +2773,12 @@ voice. As such the integration of this system with either the Skype or Mumble
 systems would be an awe inspiring advancement. Before this can happen the
 corpus that we created would need to be expanded to include many different
 speakers including more females and more than one language (English). Based on
-all of our analysis though we see no reason why this shouldn't be possible.
+all of our analysis, though, we see no reason why this shouldn't be possible.
 
-In conclusion: we feel that this system has been implemented effectively
+In conclusion: we feel that this system has been implemented effectively,
 solving a practical problem that exists in the landscape of personal computing.
 We have created features that are mostly orthogonal to each other providing a
-really useful view on the dataset that we have created, and created a
+really useful view on the dataset that we have created. We have also created a
 classifier that uses these features to provide a very highly accurate
 classification. The VAD system that we have built is truly robust to noisy
 personal computing environments with the caveats that we have stated earlier in
