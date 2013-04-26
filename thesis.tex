@@ -69,71 +69,69 @@
 
 \chapter*{Executive Summary}
 
-{\bf A compulsory section, of at most $1$ page} 
-\vspace{1cm} 
+\vspace{1cm}
 
-\noindent
-This section should pr\'{e}cis the project context, aims and objectives 
-and main contributions and achievements; the same section may be called
-an abstract elsewhere.  The goal is to ensure the reader is clear about 
-what the topic is, what you have done within this topic, {\em and} what 
-your view of the outcome is.
+The objective of this project was to build a voice activity detector (VAD)
+system, specifically one that was able to differentiate keyboard noise and
+mouse clicks from human speech. The reason for these specific conditions was
+that we found that existing VOIP systems would transmit these noises as if they
+were voice.
 
-The former aspects should be guided by your specification: essentially 
-this section is a (very) short version of what is typically the first 
-chapter.  The latter aspects should be presented as a concise, factual 
-bullet point list that summarises the main contributions and achievements.  
-The points will of course differ for each project, but an example is as 
-follows:
+We performed research into why this problem might exist, based on our research
+we found that most voice activity detection systems were only attempting to
+differentiate voice from background noise. This ended up giving systems which
+would transmit any sound which was not part of the general background noise.
+Keyboard impulses definitely fall into this category because they are short
+sharp impulses.
 
-\begin{quote}
-\noindent
+Our system solves this problem with a traditional binary classification
+algorithm. The dataset that we used was one that we constructed by recording
+multiple users with their keyboard and mouse configurations, in a VOIP context.
+This means that our data is relatively similar to the data that a real world
+system would use.
+
+The concrete achievements and contributions of this project are:
+
 \begin{itemize}
-\item I spent $120$ hours collecting material on and learning about the 
-      Java garbage-collection sub-system. 
-\item I wrote a total of $5000$ lines of source code, comprising a Linux 
-      device driver for a robot (in C) and a GUI (in Java) that is 
-      used to control it.
-\item I designed a new algorithm for computing the non-linear mapping 
-      from A-space to B-space using a genetic algorithm, see page $17$.
-\item I implemented a version of the algorithm proposed by Jones and 
-      Smith in [6], see page $12$, corrected a mistake in it, and 
-      compared the results with several alternatives.
+
+    \item We built a number of tools in Python for manipulating raw audio.
+
+    \item We designed a very accurate VAD system, which is particularly
+        effective at dealing with keyboard noise.
+
+    \item We performed specific research into features that do and do not help
+        with our specific VAD problem.
+
+    \item We performed a comparison of classification algorithms with our
+        feature set
+
+    \item We have built a portable VAD corpus that presents a new problem for
+        VAD systems.
+
 \end{itemize}
-\end{quote}
+
 
 % -----------------------------------------------------------------------------
 
 \chapter*{Supporting Technologies}
 
-{\bf A compulsory section, of at most $1$ page}
-\vspace{1cm} 
+We used the following technologies to build our system:
 
-\noindent
-This section should present a detailed summary, in bullet point form, of 
-any third-party resources (e.g., hardware and software components) used 
-during the project.  Use of such resources is perfectly acceptable: the 
-goal of this section is simply to be clear about where and how they are 
-used.  The content can focus on the project topic itself (rather than, 
-for example, including ``I used \mbox{\LaTeX} to prepare my thesis''); 
-an example is as follows:
-
-\begin{quote}
-\noindent
 \begin{itemize}
-\item I used the Java {\tt BigInteger} class to support my implementation 
-      of RSA.
-\item I used a parts of the OpenCV computer vision library to capture 
-      images from a camera, and for various standard operations (e.g., 
-      threshold, edge detection).
-\item I used an FPGA device supplied by the Department, and altered it 
-      to support an open-source UART core obtained from 
-      \url{http://opencores.org/}.
-\item The web-interface component of my system was implemented by 
-      extending the open-source WordPress software available from
-      \url{http://wordpress.org/}.
+
+    \item The Python programming language.
+
+    \item The scikit-learn library: \url{http://scikit-learn.org/stable/}.
+
+    \item The scikit talkbox library:
+        \url{https://pypi.python.org/pypi/scikits.talkbox}.
+
+    \item The pylab libraries: numpy, scipy and matplotlib:
+        \url{https://www.scipy.org/Getting_Started}.
+
+    \item The audacity audio editor: \url{http://audacity.sourceforge.net/}.
+
 \end{itemize}
-\end{quote}
 
 % -----------------------------------------------------------------------------
 
@@ -206,7 +204,7 @@ I would also like to thank:
 
 \vspace{1cm}
 
-The term voice activity detection \footnote{Sometimes referred to as voice
+The term voice activity detection (VAD) \footnote{Sometimes referred to as voice
 endpoint location\cite{Tuske}} refers to the algorithms that are used to
 distinguish frames of audio that contain speech from those that contain
 background noise\cite{ramirez}. The motivation for this project is that we
@@ -216,12 +214,12 @@ such as typing and mouse clicks, from speech.
 
 \section{Applications}
 
-The two main applications of VAD systems are VOIP and Speech Recognition. These
-systems have to deal with microphone input and have a strong need to determine
-whether or not human speech is present in any particular frame of audio. These
-systems are not concerned with all of the audio within the sequence. As such it
-seems intuitive to build a detector that can remove frames of audio that do not
-contain speech.
+The two main applications of VAD systems are Voice over Internet Protocol
+(VOIP) and Speech Recognition. These systems have to deal with microphone input
+and have a strong need to determine whether or not human speech is present in
+any particular frame of audio. These systems are not concerned with all of the
+audio within the sequence. As such it seems intuitive to build a detector that
+can remove frames of audio that do not contain speech.
 
 \subsection{Speech Recognition}
 
@@ -378,7 +376,7 @@ the output of a VAD system is a single bit (1 or 0 for voice or any other noise
 detected). In a VAD system we take input from the microphone and then attempt
 to determine which of two classes we are in, corresponding to whether we
 should or should not transmit the audio further. We formulate this as a
-decision as is shown in ~\ref{fig:decision1}.
+decision as is shown in figure ~\ref{fig:decision1}.
 
 \begin{figure}
         \[ decision = \left\{ \begin{array}{ll}
@@ -401,9 +399,9 @@ In this project our problem definition is slightly different: we do not only
 deal with background noise, we also deal with the fact that keyboard noise is
 picked up by microphones. This noise is in no way stationary: while most people
 do type with some rhythm, it is not entirely periodic. Additionally the noise
-can vary with speed of impact and many other factors. Additionally we have
+can vary with speed of impact and many other factors. Moreover we have
 to deal with the case where someone is typing and talking at the same time.
-The decision we have tried to model is stated in \ref{eqn:decision 2}
+The decision we have tried to model is stated in  figure \ref{eqn:decision 2}.
 
 \begin{figure}
 \[ decision = \left\{ \begin{array}{ll}
@@ -543,17 +541,18 @@ energy of a window. The equation for energy is given in figure
 of a window}, this feature is used in
 \cite{shin}\cite{sakhnov}\cite{gokhun}\cite{haigh}\cite{atal} and \cite{sohn2}.
 The energy feature of a particular window of audio has been found to be
-significantly better in frames that contain speech than background
+significantly higher in frames that contain speech than background
 noise\cite{atal}. This parameter also forms different distributions for voiced
-and unvoiced speech. The energy values for voiced speech is typically
+and unvoiced speech. The energy values for voiced speech are typically
 significantly higher than those for unvoiced speech. In \cite{atal} they state
 "The energy of unvoiced sounds is usually lower than for voiced sounds, but
-often higher than for silence." The system they used was a threshold based system,
-in \cite{shin} this feature was used as part of a machine learning based system.
-They reported "The full band energy, the conventional feature for endpoint
-detection for clean speech, does not work well for noisy speech." The feature
-did, however, give roughly 88\% accuracy figure by itself when used in their
-classifier. This feature was used in our system for classification.
+often higher than for silence." The system they used was a threshold based
+system, while in \cite{shin} this feature was used as part of a machine
+learning based system.  They reported "The full band energy, the conventional
+feature for endpoint detection for clean speech, does not work well for noisy
+speech." The feature did, however, give roughly 88\% accuracy figure by itself
+when used in their classifier. This feature was used in our system for
+classification.
 
 \begin{figure}
     $$Energy(x) = \sum_{i=0}^{length(x)}x(i)^2$$
@@ -599,20 +598,21 @@ these features so that the reader is aware of how the feature values are
 calculated.
 
 Another feature that is used in \cite{shin} is referred to as a "band energy".
-This simply takes the energy as specified in \ref{eqn:energy} but instead of
-computing it over the entire window, it is taken over the amplitude component
-of a Fourier transform that has had a band pass applied to it, with the
-frequency band specified.  An example of this is the 300-3700HZ\footnote{This
-range corresponds to the audible range of the telephone system} band energy
-that Shin et al refer to. This band energy is computed by taking the sum of
-squared amplitude values of the components of a Fourier transform that lie
-within the 300-3700HZ frequency range. In our system we used multiple band
-energies which are discussed in chapter \ref{chap:execution}.
+This simply takes the energy as specified in figure \ref{eqn:energy} but
+instead of computing it over the entire window, it is taken over the amplitude
+component of a Fourier transform that has had a band pass applied to it, with
+the frequency band specified.  An example of this is the
+300-3700HZ\footnote{This range corresponds to the audible range of the
+telephone system} band energy that Shin et al refer to. This band energy is
+computed by taking the sum of squared amplitude values of the components of a
+Fourier transform that lie within the 300-3700HZ frequency range. In our system
+we used multiple band energies which are discussed in chapter
+\ref{chap:execution}.
 
 In \cite{haigh} they used cepstral features for voice activity detection. There
 are multiple transforms that are referred to as the "cepstrum" of a signal,
 specifically the complex cepstrum, the power cepstrum and the phase
-cepstrum\cite{childers}. The power cepstrum is defined in
+cepstrum\cite{childers}. The power cepstrum is defined in figure
 \ref{eqn:power-cepstrum}. This feature is primarily used in speech recognition,
 the higher order task of determining what words are being said, rather than
 voice detection\cite{muda}. In \cite{atal} they criticize this approach for
@@ -640,15 +640,15 @@ noise. This approach would probably not work for our problem class.
 
 In \cite{moattar} one of the key features that they extracted was the dominant
 frequency component of the signal. This corresponds to the highest peak in the
-Fourier transform of the signal and is defined in \ref{eqn:dom-freq}. The
-authors of the paper observed that this feature was helpful in discriminating
-speech and silence frames. We observed problems with this feature due to the
-nature of our windowing system which are discussed in chapter \ref{chap:execution}. The
-accuracy of this feature is reported in \cite{moattar} to have a greater than
-80\% accuracy under even noisy conditions. The main caveat that they point out
-with this feature, that the background noise must be in someway regular, does
-not apply to our project. Our noise is highly irregular and is almost certainly
-not of stationary amplitude.
+Fourier transform of the signal and is defined in figure \ref{eqn:dom-freq}.
+The authors of the paper observed that this feature was helpful in
+discriminating speech and silence frames. We observed problems with this
+feature due to the nature of our windowing system which are discussed in
+chapter \ref{chap:execution}. The accuracy of this feature is reported in
+\cite{moattar} to have a greater than 80\% accuracy under even noisy
+conditions. The main caveat that they point out with this feature, that the
+background noise must be in someway regular, does not apply to our project. Our
+noise is highly irregular and is almost certainly not of stationary amplitude.
 
 \begin{figure}
     $$DominantComponent(f) = argmax_i(|\mathcal{F}(f(t))|)$$
@@ -685,11 +685,11 @@ also be used as parameters to both threshold and classifier based systems. In
     \item The energy of the error in the prediction made by the LPC. This is
         essentially defined as the error signal (computed by subtracting the
         signal predicted by the LPC and the actual signal). Energy is defined
-        above as the sum of the squares of the signal in \ref{eqn:energy}. In
-        the paper they state that this feature is equivalent to the ratio of
-        the geometric mean of the spectrum to the arithmetic mean of the
-        spectrum. This makes it equivalent to the spectral flatness measure
-        defined in \cite{moattar}.
+        above as the sum of the squares of the signal in figure
+        \ref{eqn:energy}. In the paper they state that this feature is
+        equivalent to the ratio of the geometric mean of the spectrum to the
+        arithmetic mean of the spectrum. This makes it equivalent to the
+        spectral flatness measure defined in \cite{moattar}.
 
 \end{itemize}
 
@@ -715,8 +715,8 @@ which corresponds to the classification problem that we are dealing with
     $$Train:R^x \times R^y, \{0,1\}^y \rightarrow ModelFunction$$
 
     y is the number of classes. The function takes an x by y matrix of reals
-    and a y-length vector of labels and ouptuts a model function that behaves
-    as a classification function defined in in \ref{eqn:define-classify}
+    and a y-length vector of labels and outputs a model function that behaves
+    as a classification function defined in in figure \ref{eqn:define-classify}
 
     \caption{Definition of a training function} x is the number of features and
 
@@ -750,7 +750,7 @@ leaf nodes of the tree give a classification of homogeneous class. By this
 method we ensure that all training examples will be classified correctly, in
 general this method can lead to some over-fitting that will cause the classifier
 to not generalise as well, and the trees are pruned. An example decision tree
-is shown in Figure \ref{fig:decision-tree}.
+is shown in figure \ref{fig:decision-tree}.
 
 \begin{figure}
 
@@ -788,7 +788,7 @@ with many splits, it is trained for only one split. These often achieve very
 low classification accuracy and are sometimes referred to as "weak" or "base"
 classifiers. In the famous Viola Jones face detector\cite{viola} many decision
 stumps were used to form a strong classifier that achieves very good
-classification accuracy. An example decision stump is shown in Figure
+classification accuracy. An example decision stump is shown in figure
 \ref{fig:decision-stump}.
 
 \begin{figure}
@@ -818,10 +818,10 @@ combination of weights multiplied by the classification output\footnote{The
     classification output of the classifiers within the Adaboost chain is
 usually either an integer class or a real posterior probability} of each of
 the individual classifiers within the Adaboost classifier. The pseudocode
-for training the system is given in \ref{pseudo:adaboost}.
+for training the system is given in figure \ref{pseudo:adaboost}.
 
-Within this paper we use an Adaboost algorithm that uses decision stumps as its
-base classifier, this decision was made based on the fact that we wanted
+Within this project we use an Adaboost algorithm that uses decision stumps as
+its base classifier, this decision was made based on the fact that we wanted
 training to complete quickly (decision stumps train in effectively no time) and
 that this approach has been shown to work well in other problem
 domains\cite{viola}.
@@ -923,10 +923,10 @@ of the features. Instead, the extremely randomised forest picks $n$ random
 thresholds of each feature in the random subset of features and then picks the
 one with the highest information gain.
 
-In \ref{fig:comparison} we can see a comparison of decision trees, random forests,
-extremely randomised trees and Adaboost. It is worth noting that the decision
-boundaries for random forests are a lot noisier around noisy data than the
-other classification algorithms.
+In figure \ref{fig:comparison} we can see a comparison of decision trees,
+random forests, extremely randomised trees and Adaboost. It is worth noting
+that the decision boundaries for random forests are a lot noisier around noisy
+data than the other classification algorithms.
 
 \begin{figure}
     \center{
@@ -936,11 +936,14 @@ other classification algorithms.
     \caption{Comparison
     of decision trees and ensemble classification techniques}
 
-    this shows data points with circles and decision boundaries with background
+    This shows data points with circles and decision boundaries with background
     color, shading in the background colour indicates probability where the
     ensemble methods have internal classifiers that disagree. The decision tree
     always has block color as it gives a single class as an output rather than
-    a probability
+    a probability. Specifically this plot shows the various classifiers being
+    trained against a single dataset with different features. The columns
+    are the decision surfaces for the various classifiers. The rows are the
+    different representations of the dataset, with differing features.
 
     \label{fig:comparison}
 
@@ -948,11 +951,11 @@ other classification algorithms.
 
 \subsection{Gradient Boosted Regression Trees}
 
-The gradient boosted regression trees algorithm uses boosting to build a strong
-classifier, it trains many decision trees over the training set.  The output of
-the GBRT (Gradient Boosted Regression Trees) is computed in a similar fashion
-to Adaboost. They both take the sum of the outputs of the classifiers in the
-ensemble, multiplied by some weight associated with each classifier. 
+The gradient boosted regression trees (GBRT) algorithm uses boosting to build a
+strong classifier, it trains many decision trees over the training set.  The
+output of the GBRT (Gradient Boosted Regression Trees) is computed in a similar
+fashion to Adaboost. They both take the sum of the outputs of the classifiers
+in the ensemble, multiplied by some weight associated with each classifier. 
 
 The difference between this technique and Adaboost is in how we change the
 treatment of samples in each iteration. In Adaboost more difficult samples are
@@ -978,7 +981,7 @@ of the ensemble. These techniques however come with a high processing
 performance overhead. This is simply due to the fact that there are many
 classifiers instead of one. Adaboost with decision stumps does somewhat serve
 as an exception to this rule because decision stumps take virtually no time to
-perform a classification. In this paper we consider decision trees, random
+perform a classification. In this thesis we consider decision trees, random
 forests, gradient boosted regression trees and Adaboost, comparing the feature
 set that we developed in an attempt to maximise accuracy and generalizability.
 Classification performance  served as a secondary concern because many of the
@@ -993,7 +996,7 @@ as a measure of the accuracy of the classifier. In a 2 class problem a
 completely random classifier will strike a line between (0,0) and (1,1). Better
 classifiers tend to move towards better true positive rates and lower false
 positive rates and typically occupy the upper left half of the ROC curve. An
-example of this can be seen in \ref{fig:roc-example}. Note how several
+example of this can be seen in figure \ref{fig:roc-example}. Note how several
 thresholds are pointed out on the curve.
 
 The reason for these thresholds is that most classifiers do not output a binary
@@ -1027,7 +1030,8 @@ more highly than a randomly chosen negative example.
 Later in this paper we refer to the mean absolute error, MAE, of a classifier.
 The mean absolute error is computed by taking the mean of the absolute
 differences between the predicted and actual class labels, for each instance
-that the classifier is being tested against. An equation for this is given in \ref{mae-eqn}
+that the classifier is being tested against. An equation for this is given in
+figure \ref{mae-eqn}
 
 \begin{figure}
     \begin{center}
@@ -1095,7 +1099,7 @@ classification based VAD system, was to build a dataset that is representative
 of our problem. We also have to ensure that the dataset can easily be ingested
 for use in a classifier. In this section we will discuss our approach to
 constructing a dataset that allows us to achieve the aims outlined in this
-paper.
+thesis.
 
 The first step in building the dataset was to record a reasonable amount of
 audio that can be used to build the classifier. In order to build our sample
@@ -1132,7 +1136,7 @@ In order to speed this process up a simple python script was written with a
 very simple class detector. In order to make a best guess the script ran on
 200ms windows of audio, detecting whether the sum of the absolute value of each
 of the frames in the window was above some very low threshold. If the sum of
-the current window was the same side of the threshold as the previous window
+the current window was the same side of the threshold as the previous window,
 then they were joined together. This meant that the smallest audio window that
 the user had to label was 200ms. The longest windows occurred when there was
 contiguous speech, which based on labelling experience were around 4 seconds.
@@ -1299,15 +1303,14 @@ initial feature set we went with was:
         discussed further in this section.
 
     \item The kurtosis of the Fourier-amplitude domain: this is effectively a
-        measure of "peakyness" of the spectrum and will be discussed further
-        in this section.
+        measure of "peakyness" of the spectrum.
 
-    \item The residual from a p=12 LPC analysis: as discussed in the technical
-        background chapter, the LPC has been shown to be a good predictor of
-        voice signals. The residual is computed as the squared error between
-        the prediction of the LPC and the window.
+    \item The energy of the error of a LPC analysis: as discussed in the
+        technical background chapter, the LPC has been shown to be a good
+        predictor of voice signals. This metric is computed as the squared
+        error between the prediction of the LPC and the window.
 
-    \item The 12 coefficients of a p=12 pole LPC analysis: These coefficients
+    \item The 12 coefficients of a p=12 LPC analysis: These coefficients
         are essentially a different representation of the result of the LPC
         when compared with the residual mentioned above. Our fear with this
         feature was that they may have a high level of correlation. We have
@@ -1315,7 +1318,7 @@ initial feature set we went with was:
 
     \item The third component of the power spectral density of the signal: this
         component corresponds to a large peak in the average power spectrum.
-        This can be seen in \ref{fig:psd}.
+        This can be seen in figure \ref{fig:psd}.
 
     \item The dominant component of the power spectral densities of the signal
         above the third component: this feature was determined experimentally
@@ -1349,15 +1352,16 @@ initial feature set we went with was:
 \end{figure}
 
 Features 2, 3, 4 and 7 are shown along with the complete Fourier amplitude
-domain in \ref{fig:frequencies}.
+domain in figure \ref{fig:frequencies}.
 
 \begin{figure}
     \center{
     \includegraphics[height=10cm]{frequencies.png} }
 
-    The voice FFT is the top
-    subplot, and the noise FFT is the bottom subplot, with the frequency bands
-    mentioned in 2,3,4 and 7 highlighted.
+    These plots both show the average Fourier transform for all the audio in
+    the two classes.  The voice FFT is the top subplot, and the noise FFT is
+    the bottom subplot, with the frequency bands mentioned in 2,3,4 and 7
+    highlighted.
 
     \caption{Histogram of fourier domain for voice and noise classes}
     \label{fig:frequencies}
@@ -1366,224 +1370,11 @@ domain in \ref{fig:frequencies}.
 As we can see these four frequency bands vary from each other between the two
 classes. Specifically we can see that these frequency bands represent spikes in
 the noise class and are more flat in the voice class. Additionally we can see
-that the relative amplitude at these points is much lower for the noise
-class than the voice class. In \ref{table:importances} we show the relative
+that the relative amplitude at these points is much lower for the noise class
+than the voice class. In figure \ref{table:importances} we show the relative
 feature importances as computed by the classifier over our original feature
 set. These give relatively high importances (specifically just over 11\% of the
 classification accuracy come from the 3 higher frequency bands).
-
-\begin{figure}
-    \center{
-    \begin{tabular}{| l | l |}
-    \hline
-        Feature                                    & Normalized Importance \\ \hline
-        1800-2700Hz band energy                    & 0.0540 \\
-        3500-4300 band energy                      & 0.0360 \\
-        5400-6800 band energy                      & 0.0220 \\
-        dominant frequency (300-5000Hz)            & 0.0280 \\
-        window energy                              & 0.0570 \\
-        kurtosis of the fft                        & 0.0280 \\
-        0-100Hz band energy                        & 0.1870 \\
-        lpc coefficient \#0                        & 0.0460 \\
-        lpc coefficient \#1                        & 0.0290 \\
-        lpc coefficient \#10                       & 0.0190 \\
-        lpc coefficient \#11                       & 0.0180 \\
-        lpc coefficient \#2                        & 0.0430 \\
-        lpc coefficient \#3                        & 0.0280 \\
-        lpc coefficient \#4                        & 0.0240 \\
-        lpc coefficient \#5                        & 0.0190 \\
-        lpc coefficient \#6                        & 0.0180 \\
-        lpc coefficient \#7                        & 0.0160 \\
-        lpc coefficient \#8                        & 0.0180 \\
-        lpc coefficient \#9                        & 0.0190 \\
-        lpc residual                               & 0.0410 \\
-        PSD peak at 21st component                 & 0.0320 \\
-        PSD dominant component after 3rd component & 0.0170 \\
-        sum of the first 4 (0-3) psd components    & 0.1090 \\
-        the sum of 30th-37th PSD components        & 0.0380 \\
-        zero crossings                             & 0.0440  \\
-    \hline
-
-    \end{tabular}
-}
-
-    \label{table:importances}
-\end{figure}
-
-The importances are computed by the random forest classifier during training
-and reported once training is complete. They are computed as a function of
-depth of the feature within each tree and the relative fraction of instances
-that can be accurately split by that feature. These importances are then
-averaged across the entire forest. From this we can get a relative ranking and
-importance value from the features. We can see here that two of our features
-(0-100Hz dominant frequency and third PSD component) account for approximately
-30\% of the importance of the classifier. The rest of the features all have
-roughly the same importance, ranging from 1.6000\% to 5.4000\% relative importance.
-
-One of the most interesting things that this indicates is that the energy of
-the audio windows is not a good feature for our particular dataset. This result
-is somewhat unexpected as classification energy has typically been the single
-most used feature in other VAD systems. The reason that this feature has a low
-importance, despite being one of the most commonly used features, is that
-energy is linked to the perceived loudness of a frame. In our data set the
-frames with keyboard noise in them have roughly the same amplitude as those
-that have human speech in them.
-
-The zero crossing rate similarly performs as one of the lower accuracy
-features. This feature was also found commonly in the background research, and
-more specifically has been shown to be a good feature for classifying
-percussion \cite{gouyon}. Keyboard noise is generated in a similar way to
-percussion in music (a fast impact on to a surface). As such we expected this
-feature to have a high classification importance. This can perhaps be explained
-by noting that the zero crossing rates between keyboards and voice may be
-similar, whilst the ZCR between keyboards and background noise may be
-different.
-
-The explanation for the very high level of classification importance provided
-by the 0-100Hz band energy comes from the windowing process: the lower
-frequency information of the Fourier transform is naturally amplified by the
-windowing process. This is the explanation for why the Fourier transform shows
-such a high spike for both classes in this low frequency region. Looking to
-\ref{fig:frequencies} we can see that:
-
-\begin{itemize}
-
-    \item There is a dip in the 0-100Hz band in the voice class.
-
-    \item There is a spike in the 0-100Hz band in the noise class.
-
-\end{itemize}
-
-We believe that these two reasons account for why this feature splits the
-highest fraction of samples in our data set.
-
-The third PSD component also has a very high classification importance. The
-reason for this is essentially the same as the reason that the low frequency
-band has such a high importance. The third PSD component also represents one of
-the lowest frequency components of the PSD. Based off this finding we also
-tried a composite feature. Instead of the third component we used the sum of
-PSD components 0-3. This gave a slightly improved classification accuracy: 91\%
-in cross validation versus 90\% and so our updated feature set used the sum of
-the band instead of the single value.
-
-The majority of the heavy lifting of the classification is done by these two
-features (accounting for correctly classifying 30\% of the samples). The
-remaining 70\% comes from the composite interaction of the remainder of our
-features. To get an understanding as to whether any of these features are not
-independent from each other, we decided it would be useful to build a matrix of
-feature correlations. If any features are highly correlated then it would
-suggest that these features do not give us as much useful information as if
-they were in no way correlated. The feature correlations are shown in
-\ref{fig:correlation-awesome}.
-
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=10cm]{correlation_awesome.png}
-    \end{center}
-    Feature indicies are shown in \ref{fig:feature-keys}.
-
-    \caption{Correlation of features heatmap}
-    \label{fig:correlation-awesome}
-\end{figure}
-
-\begin{figure}
-    \begin{center}
-        \begin{tabular}{ |l|l| }
-            \hline
-            Table Heading                                 & Label Number \\ \hline
-            1800 to 2700Hz Band energy                    & 0 \\ \hline
-            3500 to 4300Hz Band energy                    & 1 \\ \hline
-            5400 to 6800HZ Band Energy                    & 2 \\ \hline
-            Dominant Frequency in the 300 to 5000 Hz band & 3 \\ \hline
-            Energy of the window                          & 4 \\ \hline
-            Kurtosis of the fft                           & 5 \\ \hline
-            0 to 100Hz Band Energy                        & 6 \\ \hline
-            LPC Component 0                               & 7 \\ \hline
-            LPC Component 1                               & 8 \\ \hline
-            LPC Component 10                              & 9 \\ \hline
-            LPC Component 11                              & 10 \\ \hline
-            LPC Component 2                               & 11 \\ \hline
-            LPC Component 3                               & 12 \\ \hline
-            LPC Component 4                               & 13 \\ \hline
-            LPC Component 5                               & 14 \\ \hline
-            LPC Component 6                               & 15 \\ \hline
-            LPC Component 7                               & 16 \\ \hline
-            LPC Component 8                               & 17 \\ \hline
-            LPC Component 9                               & 18 \\ \hline
-            LPC Residual                                  & 19 \\ \hline
-            Peak at 21st PSD component                    & 20 \\ \hline
-            PSD dominant component after third component  & 21 \\ \hline
-            Sum of PSD components 0 through 3             & 22 \\ \hline
-            Sum of PSD components 30 through 36           & 23 \\ \hline
-            Zero Crossing rate                            & 24 \\ \hline
-        \end{tabular}
-    \end{center}
-    \caption{Table of features to integer key mappings}
-    \label{fig:feature-keys}
-\end{figure}
-
-From these tables we can see that there is a very low level of correlation
-between most of the features: the average correlation is 0.04 and
-the standard deviation is 0.21.
-
-However, some of these variables are highly correlated. This suggests that
-perhaps we could remove these features or perform a principal component
-analysis to further reduce the dimensionality of the data. Specifically:
-
-\begin{itemize}
-
-    \item 16 and 17 have a correlation of just over 0.5000. These features
-        represent the 6th and 7th components of the LPC analysis. This result
-        is not entirely unexpected as the LPC attempts to best fit the signal,
-        in some signals (such as flat noise) there is very little variation
-        needed to predict the next item from the previous 12.
-
-    \item 8 and 12 have a correlation of just over -0.5000. These features
-        represent the 0th and 2nd components of the LPC. Again this is somewhat
-        expected because some signals will have little variation.
-
-    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components
-        have a high correlation.
-
-    \item 23 and 5 have a high level of correlation. This represents the sum of
-        the first 4 (0-3) PSD components and the energy of the overall 16ms
-        window. This can be somewhat explained by the fact that the dominant
-        frequency components in the power spectrum lie in these components and
-        as such will make up most of the energy of the frame. Whilst
-        intuitively this result makes sense, it is worth noting that the sum of
-        the 0-3 PSD band gives much more classification importance (see:
-        \ref{table:importances}) than the energy of the frame. As such it is
-        worth keeping both of these features: it is trivial to compute the
-        energy (sum of squares) of the frame of audio.
-
-    \item 6 and 25 have a correlation of -0.5500. This is a relatively strong
-        negative correlation. The kurtosis of the FFT and the zero crossing
-        rate are somewhat inherently linked. This is because the whole spectrum
-        of the signal will determine the zero crossing rate and the kurtosis
-        is a summary statistic of the FFT.
-
-    \item 8 and 22 have a correlation of 0.7800. The 0th LPC coefficient and the
-        dominant component of the PSD after the third component are possibly
-        linked in that the LPC coefficient will change with frequency
-        information and the dominant frequency is obviously directly extracting
-        frequency information.
-
-    \item 8 and 25 have a correlation of 0.8900. The 0th LPC coefficient and the
-        zero crossing rate are inherently linked: the zero crossing rate
-        describes a characteristic that the LPC is trying to accurately
-        predict, that is the rate of sign change in the signal.
-
-\end{itemize}
-
-Here we have seen that only 9 pairs of features have correlations of above 0.5000.
-This is a very encouraging finding as it indicates that the vast majority of
-our features present different "views" on the data. As such we have a
-representation of voice/keyboard noise/background noise that is very amenable
-to classification. Independence between features is very important for us: if
-two features are highly correlated they do not provide much useful information
-for classification. By comparison if the two features are highly uncorrelated
-they provide much more information for classification.
 
 Part of the implementation process that was very useful was checking both the
 feature correlation and the relative classifier importances of our features.
@@ -1617,9 +1408,9 @@ for their rejection.
 
     \item The dominant frequency of the entire spectrum. This feature was
         originally implemented in an attempt to increase classification
-        accuracy. However based on the spectra in \ref{fig:frequencies} the
-        problem with this feature becomes obvious. Due to the windowing process
-        much of the low frequency information gets disproportionately
+        accuracy. However based on the spectra in figure \ref{fig:frequencies}
+        the problem with this feature becomes obvious. Due to the windowing
+        process much of the low frequency information gets disproportionately
         represented. This means that this feature would always stop above the
         200Hz value. The features we ended up using specifically take into
         account this spike and attempt to give a much better representation of
@@ -1648,89 +1439,8 @@ rejected it because of its very low classification accuracy. We ended up using
 the kurtosis metric because it measures peakedness relative to a normal
 distribution, for unimodal distributions\cite{DeCarlo}. Our distributions are
 definitely unimodal, they have a peak at the far low components of the spectrum
-(see \ref{fig:frequencies}).
+(see figure \ref{fig:frequencies}).
 
-\section{Analysis of the features with respect to accuracy}
-
-Once we had built our feature representation and tested the features with our
-classifier, we decided that the next step in our implementation was to
-determine the predictive power of our features. In order to do this we trained
-decision trees on each feature individually. The objective of this exercise was
-to determine how accurately the feature importances reported from the random
-forest classifier represent the predictive power of the individual features.
-Additionally we wanted to show how much stronger the predictive power of the
-combination of all the features is than any individual feature. Another
-objective here was to demonstrate that the combination of features performs
-significantly better than just passing the entire frame through as the training
-example.
-
-The reports of accuracy here are given by taking the results of a 10 fold, 66\%
-training, 33\% test cross validation. Accuracy was determined using the MAE
-metric and the standard deviation in this metric also reported. The features
-here are keyed the same as the mappings in \ref{fig:feature-keys}.
-
-\begin{figure}
-    \begin{center}
-        \begin{tabular}{|l|l|l|}
-            Feature ID & $1-MAE(Feature)$ & $STDEV(1-MAE(Feature))$ \\ \hline
-            1          & 0.6113           & 0.0019 \\ \hline
-            2          & 0.5762           & 0.0044 \\ \hline
-            3          & 0.5427           & 0.0029 \\ \hline
-            4          & 0.6040           & 0.0031 \\ \hline
-            5          & 0.6252           & 0.0018 \\ \hline
-            6          & 0.5305           & 0.0063 \\ \hline
-            7          & 0.7063           & 0.0024 \\ \hline
-            8          & 0.5788           & 0.0030 \\ \hline
-            9          & 0.5393           & 0.0043 \\ \hline
-            10         & 0.5123           & 0.0020 \\ \hline
-            11         & 0.5077           & 0.0044 \\ \hline
-            12         & 0.5550           & 0.0029 \\ \hline
-            13         & 0.5186           & 0.0040 \\ \hline
-            14         & 0.5207           & 0.0027 \\ \hline
-            15         & 0.5183           & 0.0030 \\ \hline
-            16         & 0.5150           & 0.0013 \\ \hline
-            17         & 0.5126           & 0.0049 \\ \hline
-            18         & 0.5146           & 0.0049 \\ \hline
-            19         & 0.5074           & 0.0020 \\ \hline
-            20         & 0.6095           & 0.0032 \\ \hline
-            21         & 0.5612           & 0.0041 \\ \hline
-            22         & 0.6017           & 0.0021 \\ \hline
-            23         & 0.6754           & 0.0012 \\ \hline
-            24         & 0.5490           & 0.0016 \\ \hline
-            25         & 0.7057           & 0.0015 \\ \hline
-        \end{tabular}
-    \end{center}
-    \caption{Table showing the relative accuracies of individual features}
-\end{figure}
-
-As we can see the 0-100Hz band energy feature is by far the best predictor
-within the individual feature set. This corresponds strongly with the feature
-importances computed by the classifier. An interesting upset is that feature 25
-also gives a relatively high prediction rate on its own. The reason for this
-upset is that the zero crossing rate was one of the features given the lowest
-importance by the random forest classifier. This is particularly interesting,
-according to the correlation matrix of features: 7 and 25 are relatively
-uncorrelated (-0.0770). If they both have strong predictive power, we would
-expect them to combine together to give a very good classification accuracy.
-
-It is worth noting that our second best predictor from the importances in
-\ref{table:importances}, the sum of the first 4 (0-3 inclusive) PSD components,
-comes a very close third in this table: with 68.5000\% accuracy as a predictor on
-its own. The reason that our classification rate is so much higher than any
-individual feature combined is: whilst each of the individual features may not
-have much better prediction accuracy than the baseline, they are all somewhat
-uncorrelated. This means that they present different views on the data,
-allowing the random forest classifier to extract nearly all of the variance
-from the data set, providing a much more accurate classification.
-
-Much of this section has been to do with demonstrating that the features that
-we have built for our implementation accurately help us solve the
-classification problem that we have: accurately discriminating background noise
-and typing from human speech. Based on the results reported here we are
-confident that this implementation is very much a working prototype of this
-system. We believe that some future work remains in ensuring that this system
-is robust to new speakers by building a much larger training set with a much
-more representative sample of speakers.
 
 \section{Classifier Performance}
 
@@ -1813,7 +1523,7 @@ transforms that was taking by far the longest to execute was the zero crossing
 rate feature transformation. The reason for this was that in Python iterating
 through each element of the audio arrays took an appreciable amount of time.
 
-The Python as it stood then is given in \ref{list:zcr-slow}.
+The Python as it stood then is given in figure \ref{list:zcr-slow}.
 
 
 \begin{lstlisting}[frame=single,caption=Original slow zero crossing rate implementation, label=list:zcr-slow]  % Start your code-block
@@ -1835,7 +1545,7 @@ to perform the Fourier transform over the entire training set. This batch
 optimisation will not be used during real time classification: we can only
 apply transforms to frames as they come from the input device. For interest the
 numpy python code for the zero crossing rate feature is given in
-\ref{list:zcr-fast}.
+figure \ref{list:zcr-fast}.
 
 \begin{lstlisting}[frame=single,caption=Numpy fast zero crossing rate implementation, label=list:zcr-fast]
     def zero_crossings(self, frame, fft):
@@ -1848,22 +1558,22 @@ The windowing process that broke the continuous streams of audio into 16ms
 windows was, initially, also written in pure python and was very slow. This is
 a problem that affects both the real world and training/test scenarios that we
 have. This is because the audio from the hardware data stream is not provided
-as single frames but is rather buffered to achieve better throughput. We
-should expect between 2048 and 16384 frames of audio at a time\footnote{corresponding to
-0.0400 to 0.3400 seconds of lag, depending on the quality of the audio hardware
-that is being used}. Being able to perform a batch transformation of
+as single frames but is rather buffered to achieve better throughput. We should
+expect between 2048 and 16384 frames of audio at a time\footnote{corresponding
+    to 0.0400 to 0.3400 seconds of lag, depending on the quality of the audio
+hardware that is being used}. Being able to perform a batch transformation of
 the audio to 16ms windows very quickly is very important.
 
 The initial pure Python implementation of windowing was sufficiently fast with
 a small training set. It took only a few minutes to execute, however this
 performance degraded very much linearly with the amount of audio that had to be
 processed. When the data set grew to around an hour this was far too slow. The
-original Python code is given in \ref{list:windowing-slow}. Note that in this
-implementation the audio is padded with zeros until it meets a round number of
-window lengths. This choice could have potentially degraded accuracy, but
-seemed better than trying to read the rest of the audio from the file. If the
-samples did not come to a round number of windows, the next part of audio had
-been labelled with a different class. Also given that we trained with 200ms
+original Python code is given in figure \ref{list:windowing-slow}. Note that in
+this implementation the audio is padded with zeros until it meets a round
+number of window lengths. This choice could have potentially degraded accuracy,
+but seemed better than trying to read the rest of the audio from the file. If
+the samples did not come to a round number of windows, the next part of audio
+had been labelled with a different class. Also given that we trained with 200ms
 wide windows this means that only $1$ in every $12$ windows would suffer from
 this problem.
 
@@ -1907,7 +1617,7 @@ showing up at the top of a profiled run, it disappeared straight to the bottom.
 The performance improvement was roughly a 2x speedup of the entire
 load/transform/classify system. On the full run this reduced the training time
 when combined with the zero crossing rate optimisation down to 5 minutes. The
-optimised Numpy code is given in \ref{list:windowing-fast}.
+optimised Numpy code is given in figure \ref{list:windowing-fast}.
 
 \begin{lstlisting}[frame=single,caption=Optimised windowing implementation, label=list:windowing-fast]
 
@@ -1960,7 +1670,7 @@ classifier. The results of this optimisation are reported as an improvement on
 the some initial 4 hours that it took to perform these steps. We have reported
 with both hot and cold disk caches. The reason for this is to give some idea of
 the effect of storing all the data in the disk cache which is possible due to
-the large amount of ram on the machine. The results are in
+the large amount of ram on the machine. The results are in figure
 \ref{table:optimisation-results}. As we can see the hot disk cache is
 beneficial, this was very useful when repeatedly training as the classifier
 design was being iterated upon.
@@ -2056,6 +1766,318 @@ In this chapter we have given the results of a number of experiments that were
 performed over our classifier built in the previous chapter. We largely look at
 classification accuracy, performance and generalizability.
 
+\section{Feature analysis}
+
+In this section we analyse the relative merits of the features that we used in
+this classifier. Paying particular attention to both: the importance assigned
+to the features by the classifier and the relative predictive power of the
+features.
+
+\subsection{The classifier's evaluation of feature importances}
+
+\begin{figure}
+    \center{
+    \begin{tabular}{| l | l |}
+    \hline
+        Feature                                    & Normalized Importance \\ \hline
+        1800-2700Hz band energy                    & 0.0540 \\
+        3500-4300 band energy                      & 0.0360 \\
+        5400-6800 band energy                      & 0.0220 \\
+        dominant frequency (300-5000Hz)            & 0.0280 \\
+        window energy                              & 0.0570 \\
+        kurtosis of the fft                        & 0.0280 \\
+        0-100Hz band energy                        & 0.1870 \\
+        lpc coefficient \#0                        & 0.0460 \\
+        lpc coefficient \#1                        & 0.0290 \\
+        lpc coefficient \#10                       & 0.0190 \\
+        lpc coefficient \#11                       & 0.0180 \\
+        lpc coefficient \#2                        & 0.0430 \\
+        lpc coefficient \#3                        & 0.0280 \\
+        lpc coefficient \#4                        & 0.0240 \\
+        lpc coefficient \#5                        & 0.0190 \\
+        lpc coefficient \#6                        & 0.0180 \\
+        lpc coefficient \#7                        & 0.0160 \\
+        lpc coefficient \#8                        & 0.0180 \\
+        lpc coefficient \#9                        & 0.0190 \\
+        lpc residual                               & 0.0410 \\
+        PSD peak at 21st component                 & 0.0320 \\
+        PSD dominant component after 3rd component & 0.0170 \\
+        sum of the first 4 (0-3) psd components    & 0.1090 \\
+        the sum of 30th-37th PSD components        & 0.0380 \\
+        zero crossings                             & 0.0440  \\
+    \hline
+
+    \end{tabular}
+}
+
+    \label{table:importances}
+\end{figure}
+
+The random forest classifier, that we used, will compute the relative
+importance of the features that is training against. These importances are
+reported at the end of classifier training. The importances are computed as a
+function of depth of the feature within each tree and the relative fraction of
+instances that can be accurately split by that feature. These importances are
+then averaged across the entire forest. From this we can get a relative ranking
+and importance value from the features. We can see here that two of our
+features (0-100Hz dominant frequency and third PSD component) account for
+approximately 30\% of the importance of the classifier. The rest of the
+features all have roughly the same importance, ranging from 1.6000\% to
+5.4000\% relative importance.
+
+One of the most interesting things that this indicates is that the energy of
+the audio windows is not a good feature for our particular dataset. This result
+is somewhat unexpected as classification energy has typically been the single
+most used feature in other VAD systems. The reason that this feature has a low
+importance, despite being one of the most commonly used features, is that
+energy is linked to the perceived loudness of a frame. In our data set the
+frames with keyboard noise in them have roughly the same amplitude as those
+that have human speech in them.
+
+The zero crossing rate similarly performs as one of the lower accuracy
+features. This feature was also found commonly in the background research, and
+more specifically has been shown to be a good feature for classifying
+percussion \cite{gouyon}. Keyboard noise is generated in a similar way to
+percussion in music (a fast impact on to a surface). As such we expected this
+feature to have a high classification importance. This can perhaps be explained
+by noting that the zero crossing rates between keyboards and voice may be
+similar, whilst the ZCR between keyboards and background noise may be
+different.
+
+The explanation for the very high level of classification importance provided
+by the 0-100Hz band energy comes from the windowing process: the lower
+frequency information of the Fourier transform is naturally amplified by the
+windowing process. This is the explanation for why the Fourier transform shows
+such a high spike for both classes in this low frequency region. Looking to
+figure \ref{fig:frequencies} we can see that:
+
+\begin{itemize}
+
+    \item There is a dip in the 0-100Hz band in the voice class.
+
+    \item There is a spike in the 0-100Hz band in the noise class.
+
+\end{itemize}
+
+We believe that these two reasons account for why this feature splits the
+highest fraction of samples in our data set.
+
+The third PSD component also has a very high classification importance. The
+reason for this is essentially the same as the reason that the low frequency
+band has such a high importance. The third PSD component also represents one of
+the lowest frequency components of the PSD. Based off this finding we also
+tried a composite feature. Instead of the third component we used the sum of
+PSD components 0-3. This gave a slightly improved classification accuracy: 91\%
+in cross validation versus 90\% and so our updated feature set used the sum of
+the band instead of the single value.
+
+The majority of the heavy lifting of the classification is done by these two
+features (accounting for correctly classifying 30\% of the samples). The
+remaining 70\% comes from the composite interaction of the remainder of our
+features.
+
+\subsection{Feature correlation}
+
+To get an understanding as to whether any of these features are not
+independent from each other, we decided it would be useful to build a matrix of
+feature correlations. If any features are highly correlated then it would
+suggest that these features do not give us as much useful information as if
+they were in no way correlated. The feature correlations are shown in
+figure \ref{fig:correlation-awesome}.
+
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=10cm]{correlation_awesome.png}
+    \end{center}
+    Feature indices are shown in figure \ref{fig:feature-keys}.
+
+    \caption{Correlation of features heatmap}
+    \label{fig:correlation-awesome}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \begin{tabular}{ |l|l| }
+            \hline
+            Table Heading                                 & Label Number \\ \hline
+            1800 to 2700Hz Band energy                    & 0 \\ \hline
+            3500 to 4300Hz Band energy                    & 1 \\ \hline
+            5400 to 6800HZ Band Energy                    & 2 \\ \hline
+            Dominant Frequency in the 300 to 5000 Hz band & 3 \\ \hline
+            Energy of the window                          & 4 \\ \hline
+            Kurtosis of the fft                           & 5 \\ \hline
+            0 to 100Hz Band Energy                        & 6 \\ \hline
+            LPC Component 0                               & 7 \\ \hline
+            LPC Component 1                               & 8 \\ \hline
+            LPC Component 10                              & 9 \\ \hline
+            LPC Component 11                              & 10 \\ \hline
+            LPC Component 2                               & 11 \\ \hline
+            LPC Component 3                               & 12 \\ \hline
+            LPC Component 4                               & 13 \\ \hline
+            LPC Component 5                               & 14 \\ \hline
+            LPC Component 6                               & 15 \\ \hline
+            LPC Component 7                               & 16 \\ \hline
+            LPC Component 8                               & 17 \\ \hline
+            LPC Component 9                               & 18 \\ \hline
+            LPC Residual                                  & 19 \\ \hline
+            Peak at 21st PSD component                    & 20 \\ \hline
+            PSD dominant component after third component  & 21 \\ \hline
+            Sum of PSD components 0 through 3             & 22 \\ \hline
+            Sum of PSD components 30 through 36           & 23 \\ \hline
+            Zero Crossing rate                            & 24 \\ \hline
+        \end{tabular}
+    \end{center}
+    \caption{Table of features to integer key mappings}
+    \label{fig:feature-keys}
+\end{figure}
+
+From figure \ref{fig:correlation-awesome} we can see that there is a very low
+level of correlation between most of the features: the average correlation is
+0.04 and the standard deviation is 0.21.
+
+However, some of these variables are highly correlated. This suggests that
+perhaps we could remove these features or perform a principal component
+analysis to further reduce the dimensionality of the data. Specifically:
+
+\begin{itemize}
+
+    \item 16 and 17 have a correlation of just over 0.5000. These features
+        represent the 6th and 7th components of the LPC analysis. This result
+        is not entirely unexpected as the LPC attempts to best fit the signal,
+        in some signals (such as flat noise) there is very little variation
+        needed to predict the next item from the previous 12.
+
+    \item 8 and 12 have a correlation of just over -0.5000. These features
+        represent the 0th and 2nd components of the LPC. Again this is somewhat
+        expected because some signals will have little variation.
+
+    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components
+        have a high correlation.
+
+    \item 23 and 5 have a high level of correlation. This represents the sum of
+        the first 4 (0-3) PSD components and the energy of the overall 16ms
+        window. This can be somewhat explained by the fact that the dominant
+        frequency components in the power spectrum lie in these components and
+        as such will make up most of the energy of the frame. Whilst
+        intuitively this result makes sense, it is worth noting that the sum of
+        the 0-3 PSD band gives much more classification importance (see: figure
+        \ref{table:importances}) than the energy of the frame. As such it is
+        worth keeping both of these features: it is trivial to compute the
+        energy (sum of squares) of the frame of audio.
+
+    \item 6 and 25 have a correlation of -0.5500. This is a relatively strong
+        negative correlation. The kurtosis of the FFT and the zero crossing
+        rate are somewhat inherently linked. This is because the whole spectrum
+        of the signal will determine the zero crossing rate and the kurtosis
+        is a summary statistic of the FFT.
+
+    \item 8 and 22 have a correlation of 0.7800. The 0th LPC coefficient and the
+        dominant component of the PSD after the third component are possibly
+        linked in that the LPC coefficient will change with frequency
+        information and the dominant frequency is obviously directly extracting
+        frequency information.
+
+    \item 8 and 25 have a correlation of 0.8900. The 0th LPC coefficient and the
+        zero crossing rate are inherently linked: the zero crossing rate
+        describes a characteristic that the LPC is trying to accurately
+        predict, that is the rate of sign change in the signal.
+
+\end{itemize}
+
+Here we have seen that only 9 pairs of features have correlations of above 0.5000.
+This is a very encouraging finding as it indicates that the vast majority of
+our features present different "views" on the data. As such we have a
+representation of voice/keyboard noise/background noise that is very amenable
+to classification. Independence between features is very important for us: if
+two features are highly correlated they do not provide much useful information
+for classification. By comparison if the two features are highly uncorrelated
+they provide much more information for classification.
+
+\subsection{Analysis of the features with respect to accuracy}
+
+Once we had built our feature representation and tested the features with our
+classifier, we decided that the next step in our implementation was to
+determine the predictive power of our features. In order to do this we trained
+decision trees on each feature individually. The objective of this exercise was
+to determine how accurately the feature importances reported from the random
+forest classifier represent the predictive power of the individual features.
+Additionally we wanted to show how much stronger the predictive power of the
+combination of all the features is than any individual feature. Another
+objective here was to demonstrate that the combination of features performs
+significantly better than just passing the entire frame through as the training
+example.
+
+The reports of accuracy here are given by taking the results of a 10 fold, 66\%
+training, 33\% test cross validation. Accuracy was determined using the MAE
+metric and the standard deviation in this metric also reported. The features
+here are keyed the same as the mappings in figure \ref{fig:feature-keys}.
+
+\begin{figure}
+    \begin{center}
+        \begin{tabular}{|l|l|l|}
+            Feature ID & $1-MAE(Feature)$ & $STDEV(1-MAE(Feature))$ \\ \hline
+            0          & 0.6113           & 0.0019 \\ \hline
+            1          & 0.5762           & 0.0044 \\ \hline
+            2          & 0.5427           & 0.0029 \\ \hline
+            3          & 0.6040           & 0.0031 \\ \hline
+            4          & 0.6252           & 0.0018 \\ \hline
+            5          & 0.5305           & 0.0063 \\ \hline
+            6          & 0.7063           & 0.0024 \\ \hline
+            7          & 0.5788           & 0.0030 \\ \hline
+            8          & 0.5393           & 0.0043 \\ \hline
+            9          & 0.5123           & 0.0020 \\ \hline
+            10         & 0.5077           & 0.0044 \\ \hline
+            11         & 0.5550           & 0.0029 \\ \hline
+            12         & 0.5186           & 0.0040 \\ \hline
+            13         & 0.5207           & 0.0027 \\ \hline
+            14         & 0.5183           & 0.0030 \\ \hline
+            15         & 0.5150           & 0.0013 \\ \hline
+            16         & 0.5126           & 0.0049 \\ \hline
+            17         & 0.5146           & 0.0049 \\ \hline
+            18         & 0.5074           & 0.0020 \\ \hline
+            19         & 0.6095           & 0.0032 \\ \hline
+            20         & 0.5612           & 0.0041 \\ \hline
+            21         & 0.6017           & 0.0021 \\ \hline
+            22         & 0.6754           & 0.0012 \\ \hline
+            23         & 0.5490           & 0.0016 \\ \hline
+            24         & 0.7057           & 0.0015 \\ \hline
+        \end{tabular}
+    \end{center}
+    \caption{Table showing the relative accuracies of individual features}
+    \label{fig:feature-accuracies}
+\end{figure}
+
+As we can see (in figure \ref{fig:feature-accuracies}) the 0-100Hz band energy
+feature is by far the best predictor within the individual feature set. This
+corresponds strongly with the feature importances computed by the classifier.
+An interesting upset is that feature 25 also gives a relatively high prediction
+rate on its own. The reason for this upset is that the zero crossing rate was
+one of the features given the lowest importance by the random forest
+classifier. This is particularly interesting, according to the correlation
+matrix of features: 7 and 25 are relatively uncorrelated (-0.0770). If they
+both have strong predictive power, we would expect them to combine together to
+give a very good classification accuracy.
+
+It is worth noting that our second best predictor from the importances in
+figure \ref{table:importances}, the sum of the first 4 (0-3 inclusive) PSD
+components, comes a very close third in this table: with 68.5000\% accuracy as
+a predictor on its own. The reason that our classification rate is so much
+higher than any individual feature combined is: whilst each of the individual
+features may not have much better prediction accuracy than the baseline, they
+are all somewhat uncorrelated. This means that they present different views on
+the data, allowing the random forest classifier to extract nearly all of the
+variance from the data set, providing a much more accurate classification.
+
+Much of this section has been to do with demonstrating that the features that
+we have built for our implementation accurately help us solve the
+classification problem that we have: accurately discriminating background noise
+and typing from human speech. Based on the results reported here we are
+confident that this implementation is very much a working prototype of this
+system. We believe that some future work remains in ensuring that this system
+is robust to new speakers by building a much larger training set with a much
+more representative sample of speakers.
+
 \section{Sample Bits}
 
 In the technical background chapter we explained how each sample of audio is
@@ -2093,7 +2115,7 @@ removing these bits in terms of the effect on the accuracy of the
 classification system. In order to perform testing we trained our classifier
 system on 50\% of the data in the training set and tested against the other
 50\%. The ROC curves of the results from this experiment are shown in
-\ref{fig:roc-bitcrush}.
+figure \ref{fig:roc-bitcrush}.
 
 \begin{figure}
     \center {
@@ -2132,7 +2154,8 @@ Nyquist limit of 8000Hz. Our audio samples being recorded at 48000Hz means that
 we may have vastly much more information than we need. In order to test this we
 initially started by taking half (24000Hz) and quarter (12000Hz) frame rates,
 to determine whether or not this would have a significant affect on
-classification accuracy. The results are shown in \ref{fig:roc-frameratecrush}.
+classification accuracy. The results are shown in figure
+\ref{fig:roc-frameratecrush}.
 
 \begin{figure}
     \includegraphics[width=15cm]{roc_framerates.png}
@@ -2162,13 +2185,13 @@ an unseen, male, speaker. The sequence was approximately approximately 16.5000
 seconds in length. This gave us 1037 windows to classify against the unseen
 speaker. The classifier was trained against the entire labelled training set
 that we created. We then performed classification on each of the frames in the
-unseen sequence. The confusion matrix for this experiment can be seen in
-\ref{table:confusion_unseen}. It should be noted that any 16ms window with
-total silence is discarded, so only 822 were sent to the classifier. From a
-visual inspection of the data in \ref{fig:waveform_unseen} we can see that
-noise regions were correctly classified, with only a few frames noise frames
-being transmitted. Most voice regions were classified noisily. In order to
-improve this system to generalize to unseen speakers we would require a much
+unseen sequence. The confusion matrix for this experiment can be seen in figure
+\ref{table:confusion_unseen}. We discard totally silent windows, this means
+that of the 1037 we had, only 822 windows were seen by the classifier. From a
+visual inspection of the data in figure \ref{fig:waveform_unseen} we can see
+that noise regions were correctly classified, with only a few frames noise
+frames being transmitted. Most voice regions were classified noisily. In order
+to improve this system to generalize to unseen speakers we would require a much
 much larger sample of audio to draw from. However, hand labelling may
 significantly slow the process.
 
@@ -2245,7 +2268,7 @@ start of speech. This utterance was picked up by the system and largely
 transmitted. The main body of the talking was transmitted and only pauses were
 classified as noise. The tail of the speech was also largely transmitted, with
 background noise being detected accurately. The classification diagram can be
-seen in \ref{fig:ultimation}.
+seen in figure \ref{fig:ultimation}.
 
 \begin{figure}
     \center{
@@ -2284,11 +2307,11 @@ earlier, a simple decision tree algorithm and the k nearest neighbor method.
 These represent a broad stroke of classification algorithms used today and will
 hopefully reveal as to whether or not our decision to use the Random Forest
 classifier was a correct one. For all classifiers we have reported the ROC
-curves in \ref{fig:multiclass-roc}, the confusion matrices in
-\ref{fig:multiclass-confusion} and the training and test times in
-\ref{fig:multiclass-speed}. This experiment was performed
-by training the classifiers on half of the data that we have available and
-using the other half as unseen testing examples.
+curves in figure \ref{fig:multiclass-roc}, the confusion matrices in
+figure \ref{fig:multiclass-confusion} and the training and test times in
+figure \ref{fig:multiclass-speed}. This experiment was performed by training the
+classifiers on half of the data that we have available and using the other half
+as unseen testing examples.
 
 \begin{figure}
     \includegraphics[width=10cm]{roc_different.png}
@@ -2441,7 +2464,7 @@ estimators is a reasonable choice of estimator count for our classifier.
 
 The results of this experiment are reported by comparing the ROC AUC to the
 number of trees that were trained in the classifier, they are shown in
-\ref{fig:roc-trees}.
+figure \ref{fig:roc-trees}.
 
 \begin{figure}
     \center{
@@ -2457,7 +2480,7 @@ this to be a significant difference in classification accuracy.
 An interesting observation we make with this graph is that in general the odd
 numbered counts of trees seem to cause peaks in accuracy when compared with
 their even numbered counterparts. An example of this is shown in
-\ref{table:roc_spike}, the table shows the last 4 points in the curve, with their ROC
+figure \ref{table:roc_spike}, the table shows the last 4 points in the curve, with their ROC
 AUC scores.
 
 \begin{figure}
@@ -2483,7 +2506,8 @@ These differences are so small that we decided to employ a t-test to determine
 the whether the differences were significant. The test was performed over the
 10 fold cross validation results of two classifiers, one trained with 100 trees
 and one trained with 95 trees. In order to do this we use the standard
-difference of two means test. The test's results are shown in \ref{fig:t-test}.
+difference of two means test. The test's results are shown in figure
+\ref{fig:t-test}.
 
 \begin{figure}
     \center {
@@ -2536,7 +2560,7 @@ execution phase of this project. Depths were chosen between 10 and 1000 (in
 steps of 50) and we also trained a completely unpruned forest. The graph of
 results shows a comparison of the pruning depth with the ROC AUC metric. The
 maximum depth tree is not included in this graph as it is not clear what depth
-it was grown to.  The graph is shown in \ref{fig:roc-depths}.
+it was grown to.  The graph is shown in figure \ref{fig:roc-depths}.
 
 \begin{figure}
     \includegraphics[width=10cm]{roc_differing_depth.png}
@@ -2607,7 +2631,7 @@ from the literature. We decided to compare the predictive power of these two
 features with our classifier. In order to do this we trained both the full
 classifier and the classifier with these two features against half of the data
 that we had labelled.  We then tested the classifiers against the other half of
-the data. The results are shown as ROC curves in \ref{fig:reduced-features}. As
+the data. The results are shown as ROC curves in figure \ref{fig:reduced-features}. As
 we can see these combined features give a 91\% area under the ROC curve. Whilst
 this predictive power is good, our system performs significantly better. This
 indicates that our system has improved on the core predictive features. It is
