@@ -58,8 +58,6 @@
 
 \tableofcontents
 \listoffigures
-\listoftables
-\listofalgorithms
 \lstlistoflistings
 
 % The following sections are part of the front matter, but are not generated
@@ -73,22 +71,21 @@
 
 The objective of this project was to build a voice activity detector (VAD)
 system, specifically one that was able to differentiate keyboard noise and
-mouse clicks from human speech. The reason for these specific conditions was
-that we found that existing VOIP systems would transmit these noises as if they
-were voice.
+mouse clicks from human speech. We targeted this specific problem because
+we found that existing VAD systems would transmit keyboard and mouse noise
+as voice.
 
 We performed research into why this problem might exist, based on our research
 we found that most voice activity detection systems were only attempting to
-differentiate voice from background noise. This ended up giving systems which
-would transmit any sound which was not part of the general background noise.
+differentiate voice from background noise. This caused these systems to
+transmit anything that was not part of the continuous background noise.
 Keyboard impulses definitely fall into this category because they are short
 sharp impulses.
 
 Our system solves this problem with a traditional binary classification
-algorithm. The dataset that we used was one that we constructed by recording
-multiple users with their keyboard and mouse configurations, in a VOIP context.
-This means that our data is relatively similar to the data that a real world
-system would use.
+algorithm. The dataset that we used was one that we constructed, by recording
+multiple users with their keyboard and mouse configurations.  This means that
+our data is relatively similar to the data that a real world system would use.
 
 The concrete achievements and contributions of this project are:
 
@@ -99,7 +96,7 @@ The concrete achievements and contributions of this project are:
     \item We designed a very accurate VAD system, which is particularly
         effective at dealing with keyboard noise.
 
-    \item We performed specific research into features that do and do not help
+    \item We performed research into features that do and do not help
         with our specific VAD problem.
 
     \item We performed a comparison of classification algorithms with our
@@ -121,15 +118,15 @@ We used the following technologies to build our system:
 
     \item The Python programming language.
 
-    \item The scikit-learn library: \url{http://scikit-learn.org/stable/}.
+    \item The Scikit Learn library: \url{http://scikit-learn.org/stable/}.
 
-    \item The scikit talkbox library:
+    \item The Scikit Talkbox library:
         \url{https://pypi.python.org/pypi/scikits.talkbox}.
 
-    \item The pylab libraries: numpy, scipy and matplotlib:
+    \item The Pylab libraries: numpy, scipy and matplotlib:
         \url{https://www.scipy.org/Getting_Started}.
 
-    \item The audacity audio editor: \url{http://audacity.sourceforge.net/}.
+    \item The Audacity audio editor: \url{http://audacity.sourceforge.net/}.
 
 \end{itemize}
 
@@ -1305,7 +1302,7 @@ initial feature set we went with was:
     \item The kurtosis of the Fourier-amplitude domain: this is effectively a
         measure of "peakyness" of the spectrum.
 
-    \item The energy of the error of a LPC analysis: as discussed in the
+    \item The energy of the error of an LPC analysis: as discussed in the
         technical background chapter, the LPC has been shown to be a good
         predictor of voice signals. This metric is computed as the squared
         error between the prediction of the LPC and the window.
@@ -2180,12 +2177,12 @@ way to test possible future performance when the system is used in a production
 environment. The classifier system was only trained with 9 speakers. As such
 there is a possibility that it will not work well with when presented with
 unseen speakers. To test this we recorded a sequence of audio. It contained
-pure speech/background noise with no strong keyboard impulses. The speaker was
-an unseen, male, speaker. The sequence was approximately approximately 16.5000
-seconds in length. This gave us 1037 windows to classify against the unseen
-speaker. The classifier was trained against the entire labelled training set
-that we created. We then performed classification on each of the frames in the
-unseen sequence. The confusion matrix for this experiment can be seen in figure
+both speech and keyboard impulses. The speaker was an unseen, male, speaker.
+The sequence was approximately approximately 16.5 seconds in length. This gave
+us 1037 windows to classify against the unseen speaker. The classifier was
+trained against the entire labelled training set that we created. We then
+performed classification on each of the frames in the unseen sequence. The
+confusion matrix for this experiment can be seen in figure
 \ref{table:confusion_unseen}. We discard totally silent windows, this means
 that of the 1037 we had, only 822 windows were seen by the classifier. From a
 visual inspection of the data in figure \ref{fig:waveform_unseen} we can see
@@ -2220,22 +2217,18 @@ significantly slow the process.
 \end{figure}
 
 \begin{figure}
-    \center {
+    \begin{center}
 
         \includegraphics[width=10cm]{peter.png}
-    }
+    \end{center}
 
-
-    This diagram shows the waveform, class over time, and post-processed
-    waveform for a specific audio sequence. The middle diagram, which shows
-    class represents the classification of each specific window over time.
-    Class is only shown when a change in classifier output occurs. We can see
-    here that the classification on an unseen speaker with unseen data is very
-    noisy when in the speech class and somewhat accurate in the noise class.
-    This suggests that the background noise detection in the classifier is
-    reasonably accurate. It also suggests that the detector for voice is not so
-    robust to unseen voice data. A possible explanation for this is that there
-    is significantly more variation in voice than in background noise.
+    This classification diagram shows the original audio waveform, the class
+    predictions that the classifier made (when they changed) and the
+    post-processed waveform. The post-processed waveform has any frames marked
+    as noise by the classifier set to amplitude zero. The first two spikes that
+    can be seen are typing impulses, the second and final spikes are voice
+    data. As can be seen the noise impulses get largely silenced, but the
+    classification during the voice is also very noisy.
 
     \caption{Classification diagram for unseen speaker}
     \label{fig:waveform_unseen}
