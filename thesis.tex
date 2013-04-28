@@ -2393,6 +2393,12 @@ algorithm. This does not contravene expectations as these methods both use a
 large ensemble of classifiers. Specifically for both ensemble classifiers we
 trained using 100 trees.
 
+We note that the Extremely Random Forest is not shown here. This is because it
+had  extremely similar accuracy and performance characteristics to the Random
+Forest. Adaboost is not shown as we had trouble getting it to successfully
+classify on our dataset. We believe this is because it is currently not in a
+stable release of the SKLearn library.
+
 What is more interesting is perhaps that the decision tree classifier achieves
 a higher raw classification accuracy than all the algorithms apart from the
 decision forest, but the decision tree algorithm has a lower area under the ROC
