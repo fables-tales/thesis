@@ -1385,10 +1385,11 @@ As we can see these four frequency bands vary from each other between the two
 classes. Specifically we can see that these frequency bands represent spikes in
 the noise class and are more flat in the voice class. Additionally we can see
 that the relative amplitude at these points is much lower for the noise class
-than the voice class. In figure \ref{table:importances} we show the relative
-feature importances as computed by the classifier over our original feature
-set. These give relatively high importances (specifically just over 11\% of the
-classification accuracy come from the 3 higher frequency bands).
+than the voice class. In figure \ref{table:importances}, in the next chapter,
+we show the relative feature importances as computed by the classifier over our
+original feature set. These give relatively high importances (specifically just
+over 11\% of the classification accuracy come from the 3 higher frequency
+bands).
 
 Part of the implementation process that was very useful was checking both the
 feature correlation and the relative classifier importances of our features.
@@ -1704,12 +1705,8 @@ design was being iterated upon.
 
 In this project we have implemented a random forest classifier that gives a
 very high classification accuracy on the problem data set that it has been
-trained against. Much of the implementation's classification accuracy comes
-from the fact that our features have a very low level of inter correlation,
-specifically only 9 of the 625 possible feature pairs have a correlation of
-more than 0.5. This is encouraging as it indicates that our features give a
-very independent view on the data set. As such we would very much look to
-this combination of features to be considered for future VAD systems.
+trained against. In the next chapter we will investigate the reasons why we
+believe our features and classifier give such a high classification accuracy.
 
 Having independent features, whilst encouraging, is not enough on its own to
 give a good classification rate. One thing that is very important is to have a
