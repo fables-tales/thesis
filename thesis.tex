@@ -83,12 +83,16 @@ transmit anything that was not part of the continuous background noise.
 Keyboard impulses definitely fall into this category because they are neither
 of stationary amplitude or periodic.
 
-Our system solves this problem with a traditional binary classification
-algorithm. The dataset that we used was one that we constructed, by recording
-multiple users with their keyboard and mouse configurations.  This means that
-our data are relatively similar to the data that a real world system would use.
+We feel that we have thoroughly solved this problem. We have tested random
+forests, gradient boosted regression trees, decision trees and $k$ nearest
+neighbor classifiers against each other in a VAD context, determining that
+random forests give the best classification results. We have created a database
+of some 225000 samples with both voice, keyboard noise and background noise.
+The database contains 9 speakers. The resulting classifier that we describe in
+this project achieves a 98\% classification accuracy, as measured by the area
+under the receiver operating characteristic curve metric.
 
-The concrete achievements and contributions of this project are:
+The main achievements and contributions of this project are:
 
 \begin{itemize}
 
@@ -703,6 +707,19 @@ also be used as parameters to both threshold and classifier based systems. In
 
 \end{itemize}
 
+\subsection{Power Spectral Density}
+
+The power spectral density of a signal is a transform that is similar to the
+fourier transform. The power spectral densities give the relative power per
+frequency, for several frequency components of the signal. The power spectrum
+does, however, differ from the fourier transform in a couple of key ways.
+Firstly the power spectrum has no phase component, it only gives the absolute
+power/frequency values for each component. Secondly the fourier transform gives
+us the relative strengths of sinusoids in a signal. The power spectrum is
+effectively a fourier transform of the autocorrelation function, this means
+that it gives us the relative strengths of long and short term correlation
+within the signal .\cite{psd}\cite{psd2}
+
 
 \section{Machine learning techniques}
 
@@ -1057,18 +1074,6 @@ figure \ref{mae-eqn}
     \label{mae-eqn}
 \end{figure}
 
-\section{Power Spectral Density}
-
-The power spectral density of a signal that is similar to the fourier
-transform. The power spectral densities give the relative power per frequency, for
-several frequency components of the signal. The power spectrum does, however,
-differ from the fourier transform in a couple of key ways. Firstly the power
-spectrum has no phase component, it only gives the absolute power/frequency values for
-each component. Secondly the fourier transform gives us the relative strengths
-of sinusoids in a signal. The power spectrum is effectively a fourier transform
-of the autocorrelation function, this means that it gives us the relative
-strengths of long and short term correlation within the signal
-.\cite{psd}\cite{psd2}
 
 
 % -----------------------------------------------------------------------------
@@ -1780,7 +1785,7 @@ classification accuracy, performance and generalizability.
 \section{Feature analysis}
 
 In this section we analyse the relative merits of the features that we used in
-this classifier. Paying particular attention to both: the importance assigned
+this classifier, paying particular attention to both: the importance assigned
 to the features by the classifier and the relative predictive power of the
 features.
 
@@ -1822,6 +1827,7 @@ features.
     \end{tabular}
 }
 
+    \caption{Table of relative feature importances as assessed by classifier}
     \label{table:importances}
 \end{figure}
 
@@ -1831,7 +1837,7 @@ reported at the end of classifier training. The importances are computed as a
 function of depth of the feature within each tree and the relative fraction of
 instances that can be accurately split by that feature. These importances are
 then averaged across the entire forest. From this we can get a relative ranking
-and importance value from the features. We can see here that two of our
+and importance value from the features. We can see in \ref{table:importances} that two of our
 features (0-100Hz dominant frequency and third PSD component) account for
 approximately 30\% of the importance of the classifier. The rest of the
 features all have roughly the same importance, ranging from 1.6\% to
@@ -1890,25 +1896,22 @@ features.
 
 \subsection{Feature correlation}
 
-To get an understanding as to whether any of these features are not
-independent from each other, we decided it would be useful to build a matrix of
-feature correlations. If any features are highly correlated then it would
-suggest that these features do not give us as much useful information as if
-they were in no way correlated. The feature correlations are shown in
-figure \ref{fig:correlation-awesome}.
+To get an understanding as to whether any of these features are not independent
+from each other, we decided it would be useful to build a matrix of feature
+correlations. If any features are highly correlated then it would suggest that
+these features do not give us as much useful information as if they were
+uncorrelated. The feature correlations are shown in figure
+\ref{fig:correlation-awesome}.
 
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=10cm]{correlation_awesome.png}
     \end{center}
-    Feature indices are shown in figure \ref{fig:feature-keys}.
 
-    \caption{Correlation of features heatmap}
-    \label{fig:correlation-awesome}
-\end{figure}
+    The color of each box (x,y) shows the correlation between features (x,y).
+    These are keyed according to the table below.
 
-\begin{figure}
     \begin{center}
         \begin{tabular}{ |l|l| }
             \hline
@@ -1940,9 +1943,11 @@ figure \ref{fig:correlation-awesome}.
             Zero Crossing rate                            & 24 \\ \hline
         \end{tabular}
     \end{center}
-    \caption{Table of features to integer key mappings}
-    \label{fig:feature-keys}
+
+    \caption{Diagram showing correlation between features}
+    \label{fig:correlation-awesome}
 \end{figure}
+
 
 From figure \ref{fig:correlation-awesome} we can see that there is a very low
 level of correlation between most of the features: the average correlation is
@@ -1954,20 +1959,20 @@ analysis to further reduce the dimensionality of the data. Specifically:
 
 \begin{itemize}
 
-    \item 16 and 17 have a correlation of just over 0.5. These features
+    \item 15 and 16 have a correlation of just over 0.5. These features
         represent the $6^{th}$ and $7^{th}$ components of the LPC analysis.
         This result is not entirely unexpected as the LPC attempts to best fit
         the signal, in some signals (such as flat noise) there is very little
         variation needed to predict the next item from the previous 12.
 
-    \item 8 and 12 have a correlation of just over -0.5. These features
+    \item 7 and 11 have a correlation of just over -0.5. These features
         represent the $0^{th}$ and $2^{nd}$ components of the LPC. Again this
         is somewhat expected because some signals will have little variation.
 
-    \item 10 and 11, 19 and 10, and 17 and 12 which are also LPC components
+    \item 9 and 10, 18 and 9, and 16 and 11 which are also LPC components
         have a high correlation.
 
-    \item 23 and 5 have a high level of correlation. This represents the sum of
+    \item 22 and 4 have a high level of correlation. This represents the sum of
         the first 4 (0-3) PSD components and the energy of the overall 16ms
         window. This can be somewhat explained by the fact that the dominant
         frequency components in the power spectrum lie in these components and
@@ -1978,19 +1983,19 @@ analysis to further reduce the dimensionality of the data. Specifically:
         worth keeping both of these features: it is trivial to compute the
         energy (sum of squares) of the frame of audio.
 
-    \item 6 and 25 have a correlation of -0.55. This is a relatively strong
+    \item 5 and 24 have a correlation of -0.55. This is a relatively strong
         negative correlation. The kurtosis of the FFT and the zero crossing
         rate are somewhat inherently linked. This is because the whole spectrum
         of the signal will determine the zero crossing rate and the kurtosis
         is a summary statistic of the FFT.
 
-    \item 8 and 22 have a correlation of 0.7800. The 0th LPC coefficient and the
+    \item 7 and 21 have a correlation of 0.7800. The 0th LPC coefficient and the
         dominant component of the PSD after the third component are possibly
         linked in that the LPC coefficient will change with frequency
         information and the dominant frequency is obviously directly extracting
         frequency information.
 
-    \item 8 and 25 have a correlation of 0.8900. The 0th LPC coefficient and the
+    \item 7 and 24 have a correlation of 0.8900. The 0th LPC coefficient and the
         zero crossing rate are inherently linked: the zero crossing rate
         describes a characteristic that the LPC is trying to accurately
         predict, that is the rate of sign change in the signal.
@@ -2030,39 +2035,38 @@ decision trees on each feature individually. The objectives of this exercise wer
 
 The reports of accuracy here are given by taking the results of a 10 fold, 66\%
 training, 33\% test cross validation. Accuracy was determined using the MAE
-metric and the standard deviation in this metric also reported. The features
-here are keyed the same as the mappings in figure \ref{fig:feature-keys}.
+metric and the standard deviation in this metric also reported.
 
 \begin{figure}
     \begin{center}
         \begin{tabular}{|l|l|l|}
             \hline
-            Feature ID & $1-\text{MAE}(Feature)$ & $\text{STDEV}(1-\text{MAE}(Feature))$ \\ \hline
-            0          & 0.6113                  & 0.0019 \\ \hline
-            1          & 0.5762                  & 0.0044 \\ \hline
-            2          & 0.5427                  & 0.0029 \\ \hline
-            3          & 0.6040                  & 0.0031 \\ \hline
-            4          & 0.6252                  & 0.0018 \\ \hline
-            5          & 0.5305                  & 0.0063 \\ \hline
-            6          & 0.7063                  & 0.0024 \\ \hline
-            7          & 0.5788                  & 0.0030 \\ \hline
-            8          & 0.5393                  & 0.0043 \\ \hline
-            9          & 0.5123                  & 0.0020 \\ \hline
-            10         & 0.5077                  & 0.0044 \\ \hline
-            11         & 0.5550                  & 0.0029 \\ \hline
-            12         & 0.5186                  & 0.0040 \\ \hline
-            13         & 0.5207                  & 0.0027 \\ \hline
-            14         & 0.5183                  & 0.0030 \\ \hline
-            15         & 0.5150                  & 0.0013 \\ \hline
-            16         & 0.5126                  & 0.0049 \\ \hline
-            17         & 0.5146                  & 0.0049 \\ \hline
-            18         & 0.5074                  & 0.0020 \\ \hline
-            19         & 0.6095                  & 0.0032 \\ \hline
-            20         & 0.5612                  & 0.0041 \\ \hline
-            21         & 0.6017                  & 0.0021 \\ \hline
-            22         & 0.6754                  & 0.0012 \\ \hline
-            23         & 0.5490                  & 0.0016 \\ \hline
-            24         & 0.7057                  & 0.0015 \\ \hline
+            Feature Name                                  & $1-\text{MAE}(\text{Feature})$ & $\text{STDEV}(1-\text{MAE}(\text{Feature}))$ \\ \hline
+            1800 to 2700Hz Band energy                    & 0.6113                         & 0.0019 \\ \hline
+            3500 to 4300Hz Band energy                    & 0.5762                         & 0.0044 \\ \hline
+            5400 to 6800HZ Band Energy                    & 0.5427                         & 0.0029 \\ \hline
+            Dominant Frequency in the 300 to 5000 Hz band & 0.6040                         & 0.0031 \\ \hline
+            Energy of the window                          & 0.6252                         & 0.0018 \\ \hline
+            Kurtosis of the fft                           & 0.5305                         & 0.0063 \\ \hline
+            0 to 100Hz Band Energy                        & 0.7063                         & 0.0024 \\ \hline
+            LPC Component 0                               & 0.5788                         & 0.0030 \\ \hline
+            LPC Component 1                               & 0.5393                         & 0.0043 \\ \hline
+            LPC Component 10                              & 0.5123                         & 0.0020 \\ \hline
+            LPC Component 11                              & 0.5077                         & 0.0044 \\ \hline
+            LPC Component 2                               & 0.5550                         & 0.0029 \\ \hline
+            LPC Component 3                               & 0.5186                         & 0.0040 \\ \hline
+            LPC Component 4                               & 0.5207                         & 0.0027 \\ \hline
+            LPC Component 5                               & 0.5183                         & 0.0030 \\ \hline
+            LPC Component 6                               & 0.5150                         & 0.0013 \\ \hline
+            LPC Component 7                               & 0.5126                         & 0.0049 \\ \hline
+            LPC Component 8                               & 0.5146                         & 0.0049 \\ \hline
+            LPC Component 9                               & 0.5074                         & 0.0020 \\ \hline
+            LPC Residual                                  & 0.6095                         & 0.0032 \\ \hline
+            Peak at 21st PSD component                    & 0.5612                         & 0.0041 \\ \hline
+            PSD dominant component after third component  & 0.6017                         & 0.0021 \\ \hline
+            Sum of PSD components 0 through 3             & 0.6754                         & 0.0012 \\ \hline
+            Sum of PSD components 30 through 36           & 0.5490                         & 0.0016 \\ \hline
+            Zero Crossing rate                            & 0.7057                         & 0.0015 \\ \hline
         \end{tabular}
     \end{center}
     \caption{Table showing the relative accuracies of individual features}
@@ -2076,7 +2080,7 @@ An interesting upset is that feature 25 also gives a relatively high prediction
 rate on its own. The reason for this upset is that the zero crossing rate was
 one of the features given the lowest importance by the random forest
 classifier. This is particularly interesting, according to the correlation
-matrix of features: 7 and 25 are relatively uncorrelated (-0.077). If they
+matrix of features: 6 and 24 are relatively uncorrelated (-0.077). If they
 both have strong predictive power, we would expect them to combine together to
 give a very good classification accuracy.
 
@@ -2090,16 +2094,15 @@ are all somewhat uncorrelated. This means that they present different views on
 the data, allowing the random forest classifier to extract nearly all of the
 variance from the data set, providing a much more accurate classification.
 
-Much of this section has been to do with demonstrating that the features that
-we have built for our implementation accurately help us solve the
-classification problem that we have: accurately discriminating background noise
-and typing from human speech. Based on the results reported here we are
-confident that this implementation is very much a working prototype of this
-system. We believe that some future work remains in ensuring that this system
-is robust to new speakers by building a much larger training set with a much
-more representative sample of speakers.
+This section has demonstrated that the features that we have built for our
+implementation accurately help us solve the classification problem that we
+have: accurately discriminating background noise and typing from human speech.
+Based on the results reported here we are confident that this implementation is
+very much a working prototype of this system. We believe that some future work
+remains in ensuring that this system is robust to new speakers by building a
+much larger training set with a much more representative sample of speakers.
 
-\section{Sample Bits}
+\section{The effect of the number of bits for sample}
 
 In the technical background chapter we explained how each sample of audio is
 represented by a number of bits, more bits giving much higher fidelity audio
@@ -2124,7 +2127,7 @@ number of compelling reasons to make this change:
 
 \end{enumerate}
 
-We obviously expect to see a reduced classification accuracy from cutting out
+We obviously expect to see a reduced classification accuracy from deleting
 the lower 8 bits of audio information. It is worth noting that unlike music,
 voice tends to have a fairly uniform amplitude. As such the minor variations
 may not have that much of an effect.
@@ -2162,7 +2165,7 @@ available to. By halving we think reducing the bitrate is a good way to improve
 our ability to release the system and improve processing performance, in exchange
 for a small amount of classification accuracy.
 
-\section{Frame Rate}
+\section{The effect of changing audio frame rate}
 
 Changing the frame rate will naturally be expected to alter classifier accuracy
 and performance. For example: reducing the frame rate will naturally reduce the
@@ -2309,7 +2312,7 @@ system/long term classifier. The long term classifier would use more
 information from the long term context of speech. This is in contrast to our
 system which only uses the short term context of a single 16ms window.
 
-\section{Use of different classification algorithms}
+\section{Performance of different classification algorithms}
 
 The choice to use the Random Forest classification algorithm was very much a
 decision made based on the author's experience. In this section we aim to see
@@ -2446,11 +2449,11 @@ accuracy.
 From this we can, however, immediately discard the 3 nearest and 5 nearest
 neighbor classifiers, they take both the longest to classify (18 seconds
 respectively to classify 320 seconds of audio) and give the lowest
-classification accuracy. 18 seconds for 320 may seem like reasonable
-performance. We envisage this system sitting in amongst many other components
-of a VOIP stack and introducing any latency may have an impact on user
-experience. Certainly the more latent any particular component is, the more
-optimised the other components have to be.
+classification accuracy. Although 18 seconds for 320 seconds of audio may seem
+like reasonable performance, we envisage this system sitting in amongst many
+other components of a VOIP stack and introducing any latency may have an impact
+on user experience. Certainly the more latent any particular component is, the
+more optimised the other components have to be.
 
 All three tree implementations run in under a second with the decision tree
 algorithm running in 0.12 seconds, the GBRT running in 0.26 and the Random
@@ -2495,8 +2498,8 @@ figure \ref{fig:roc-trees}.
     \label{fig:roc-trees}
 \end{figure}
 
-500 trees is slightly more accurate than 95 trees: 0.9743 for 95 versus
-0.7432 but at this point we are into diminishing returns. We would not consider
+500 trees is slightly more accurate than 95 trees: 0.97431 for 95 versus
+0.97426 but at this point we are into diminishing returns. We would not consider
 this to be a significant difference in classification accuracy.
 
 An interesting observation we make with this graph is that in general the odd
@@ -2550,6 +2553,8 @@ figure \ref{fig:t-test}.
 
     This is nowhere near high enough for us to conclude statistical significance and so we assume these come from the same distribution.
 
+    \caption{t-test for whether a forest with 95 trees is better than a forest with 100 trees}
+
     \label{fig:t-test}
 
 \end{figure}
@@ -2591,8 +2596,8 @@ it was grown to.  The graph is shown in figure \ref{fig:roc-depths}.
     \label{fig:roc-depths}
 \end{figure}
 
-As we can see from this curve that after about 60 trees we hit the accuracy
-limit of around 0.9800. It is worth noting that there appears to be an accuracy
+As we can see from this curve that after a depth of 60 we hit the accuracy
+limit of around 0.98. It is worth noting that there appears to be an accuracy
 limit around 98\%, regardless of how deep we allow the classifier to train.
 From this we can conclude that classifier depth does not have a significant
 effect on classification accuracy. As such we would recommend either using a
