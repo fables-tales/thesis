@@ -2169,17 +2169,17 @@ for a small amount of classification accuracy.
 
 Changing the frame rate will naturally be expected to alter classifier accuracy
 and performance. For example: reducing the frame rate will naturally reduce the
-resolution of the Fourier transform. It also means that we have to work over
-less data when computing features like the energy of the frame. This may also
-lead to a reduced classification accuracy. There is some reason to believe that
-this may not have as much impact as changing the bit rate of the classifier,
-this is due to the fact that human voice rarely goes above 4kHz, with a
-Nyquist limit of 8kHz. Our audio samples being recorded at 48kHz means that
-we may have vastly much more information than we need. In order to test this we
-initially started by taking half (24kHz) and quarter (12kHz) frame rates,
-to determine whether or not this would have a significant affect on
-classification accuracy. The results are shown in figure
-\ref{fig:roc-frameratecrush}.
+resolution of the Fourier transform. Furthermore lowering the frame rate will
+reduce the amount of data that forms the basis of other features which we
+compute such as energy of the frame. This may also lead to a reduced
+classification accuracy. There is some reason to believe that this may not have
+as much impact as changing the bit rate of the classifier, this is due to the
+fact that human voice rarely goes above 4kHz, with a Nyquist limit of 8kHz. Our
+audio samples being recorded at 48kHz means that we may have vastly much more
+information than we need. In order to test this we initially started by taking
+half (24kHz) and quarter (12kHz) frame rates, to determine whether or not this
+would have a significant affect on classification accuracy. The results are
+shown in figure \ref{fig:roc-frameratecrush}.
 
 \begin{figure}
     \includegraphics[width=15cm]{roc_framerates.png}
@@ -2196,6 +2196,66 @@ that the features were constructed on 48000Hz audio and that they may need to
 be adapted for a lower frame rate.
 
 \section {Robustness to unseen data}
+
+\subsection{Unseen data from seen speakers}
+
+The next question that is important to answer is as to whether the classifier
+that we have built is robust to unseen data from seen speakers. If this is the
+case one could imagine an automated training scenario whereby the system trains
+itself. We would do this by having the user pushing a key to indicate when they
+are speaking, transmitting speech when the key is held. This way the system can
+build samples in the voice class from the user interaction. After the end of
+the training period, however, the system must continue to be robust against
+unseen speech from the same user.
+
+For this experiment we used approximately 10 seconds of audio from our sample
+data set, with a speaker that the system had already been trained against. This
+data was otherwise unseen, it contained some frames where the speaker was
+typing and speaking at the same time. Within this sample 222 frames were not
+total silence. The sample contained a short, low volume, utterance before the
+start of speech. This utterance was picked up by the system and largely
+transmitted. The main body of the talking was transmitted and only pauses were
+classified as noise. The tail of the speech was also largely transmitted, with
+background noise being detected accurately. The classification diagram can be
+seen in figure \ref{fig:ultimation}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=10cm]{ultimation.png}
+    \end{center}
+
+
+    This classification diagram shows the original audio waveform, the class
+    predictions that the classifier made (when they changed) and the
+    post-processed waveform. Specifically here we can see the classification 0
+    frames is noise, the class then bounces back and forth between noise and
+    voice during the low amplitude utterence, at $\approx42000$ frames we can
+    see the class changes from noise to voice and so on. The post-processed
+    waveform has any frames marked as noise by the classifier set to amplitude
+    zero. The first two spikes that can be seen are typing impulses, the second
+    and final spikes are voice data. As can be seen the noise impulses get
+    largely silenced, but the classification during the voice is also very
+    noisy.
+
+    This entire sample is considered to be voice data.
+
+    \caption{Classification diagram for unseen data from a seen speaker}
+    \label{fig:ultimation}
+\end{figure}
+
+This shows us that, firstly, we have built a system that is relatively robust
+to speakers that have been seen. Despite the fact that we haven't seen the
+specific speech data before. This is encouraging because it indicates that this
+system will work where the speaker has been seen before. More importantly, this
+indicates that the classifier has a very high level of sensitivity as it
+accurately classified the two pauses within the overall speech.
+
+A possible problem that is brought up by this is that very quiet utterances
+flick back and forth between the background noise and speech class. This could
+be annoying if it repeatedly happens and brings to bear the idea of a smoothing
+system/long term classifier. The long term classifier would use more
+information from the long term context of speech. This is in contrast to our
+system which only uses the short term context of a single 16ms window.
 
 \subsection{Unseen speakers}
 
@@ -2249,13 +2309,9 @@ significantly slow the process.
         \includegraphics[width=10cm]{peter.png}
     \end{center}
 
-    This classification diagram shows the original audio waveform, the class
-    predictions that the classifier made (when they changed) and the
-    post-processed waveform. The post-processed waveform has any frames marked
-    as noise by the classifier set to amplitude zero. The first two spikes that
-    can be seen are typing impulses, the second and final spikes are voice
-    data. As can be seen the noise impulses get largely silenced, but the
-    classification during the voice is also very noisy.
+    This classification diagram works in a similar way to the previous one. The
+    first two spikes on this diagram are keyboard noise, the final spikes are
+    both voice data. As we can see the classification is very spotty.
 
     \caption{Classification diagram for unseen speaker}
     \label{fig:waveform_unseen}
@@ -2263,54 +2319,10 @@ significantly slow the process.
 \end{figure}
 
 Critically we see that the system that we have trained is not immediately
-robust to new speakers. This is important because it means that our
+robust to new speakers. This is important because it implies that our
 implementation, whilst giving good accuracy on speakers that it has seen, is
 not yet ready for unseen speakers. Our expectation is that if we provide more
 data to train against the system would be ready to handle unseen speakers.
-
-\subsection{Unseen data from seen speakers}
-
-The next question that is important to answer is as to whether the classifier
-that we have built is robust to unseen data from seen speakers. If this is the
-case one could imagine an automated training scenario whereby the system trains
-itself. We would do this by having the user pushing a key to indicate when they
-are speaking, transmitting speech when the key is held. This way the system can
-build samples in the voice class from the user interaction. After the end of
-the training period, however, the system must continue to be robust against
-unseen speech from the same user.
-
-For this experiment we used approximately 10 seconds of audio from our sample
-data set, with a speaker that the system had already been trained against. This
-data was otherwise unseen, it contained some frames where the speaker was
-typing and speaking at the same time. Within this sample 222 frames were not
-total silence. The sample contained a short, low volume, utterance before the
-start of speech. This utterance was picked up by the system and largely
-transmitted. The main body of the talking was transmitted and only pauses were
-classified as noise. The tail of the speech was also largely transmitted, with
-background noise being detected accurately. The classification diagram can be
-seen in figure \ref{fig:ultimation}.
-
-\begin{figure}
-    \center{
-    \includegraphics[width=10cm]{ultimation.png}
-}
-    \caption{Classification diagram for unseen data from a seen speaker}
-    \label{fig:ultimation}
-\end{figure}
-
-This shows us that, firstly, we have built a system that is relatively robust
-to speakers that have been seen. Despite the fact that we haven't seen the
-specific speech data before. This is encouraging because it indicates that this
-system will work where the speaker has been seen before. More importantly, this
-indicates that the classifier has a very high level of sensitivity as it
-accurately classified the two pauses within the overall speech.
-
-A possible problem that is brought up by this is that very quiet utterances
-flick back and forth between the background noise and speech class. This could
-be annoying if it repeatedly happens and brings to bear the idea of a smoothing
-system/long term classifier. The long term classifier would use more
-information from the long term context of speech. This is in contrast to our
-system which only uses the short term context of a single 16ms window.
 
 \section{Performance of different classification algorithms}
 
