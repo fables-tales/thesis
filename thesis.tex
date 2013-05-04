@@ -957,9 +957,9 @@ that the decision boundaries for random forests are a lot noisier around noisy
 data than the other classification algorithms.
 
 \begin{figure}
-    \center{
+    \begin{center}
         \includegraphics[width=13cm]{classifier_comparison.png}
-    }
+    \end{center}
 
     \caption{Comparison
     of decision trees and ensemble classification techniques}
@@ -1201,10 +1201,14 @@ recording speaker, this speaker was present in every recording session. Speaker
 \end{figure}
 
 \begin{figure}
-    \center{
+    \begin{center}
         \includegraphics[width=8cm]{labelling1.png}
         \includegraphics[width=8cm]{labelling2.png}
-    }
+    \end{center}
+
+    The x axis here represents time in seconds, the y axis here represents the
+    amplitude of the sample at that point in time.
+
     \caption{Example of contiguous and short region in simple labelling system}
     \label{img:labelling_example}
 \end{figure}
@@ -1355,9 +1359,9 @@ initial feature set we went with was:
 \end{enumerate}
 
 \begin{figure}
-    \center{
+    \begin{center}
         \includegraphics[width=10cm]{psd_plot_last_figure.png}
-    }
+    \end{center}
 
     \caption{PSD of voice and noise classes}
 
@@ -1374,8 +1378,9 @@ Features 2, 3, 4 and 7 are shown along with the complete Fourier amplitude
 domain in figure \ref{fig:frequencies}.
 
 \begin{figure}
-    \center{
-    \includegraphics[height=10cm]{frequencies.png} }
+    \begin{center}
+        \includegraphics[height=10cm]{frequencies.png} 
+    \end{center}
 
     These plots both show the average Fourier transform for all the audio in
     the two classes.  The voice FFT is the top subplot, and the noise FFT is
@@ -1696,11 +1701,14 @@ beneficial, this was very useful when repeatedly training as the classifier
 design was being iterated upon.
 
 \begin{figure}
-    \begin{tabular}{|l|l|}
-        Disk cache & Time (s) \\ \hline
-        Cold & 370 \\
-        Hot &  340 \\
-    \end{tabular}
+    \begin{center}
+        \begin{tabular}{|l|l|}
+            \hline
+            Disk cache & Time (s) \\ \hline
+            Cold & 370 \\ \hline
+            Hot &  340 \\ \hline
+        \end{tabular}
+    \end{center}
     \caption{Results of performance optimisations}
 
     \label{table:optimisation-results}
@@ -2346,7 +2354,9 @@ classifiers on half of the data that we have available and using the other half
 as unseen testing examples.
 
 \begin{figure}
-    \includegraphics[width=10cm]{roc_different.png}
+    \begin{center}
+        \includegraphics[width=10cm]{roc_different.png}
+    \end{center}
     \caption{ROC curves of different classifiers}
     \label{fig:multiclass-roc}
 \end{figure}
@@ -2602,7 +2612,9 @@ maximum depth tree is not included in this graph as it is not clear what depth
 it was grown to.  The graph is shown in figure \ref{fig:roc-depths}.
 
 \begin{figure}
-    \includegraphics[width=10cm]{roc_differing_depth.png}
+    \begin{center}
+        \includegraphics[width=10cm]{roc_differing_depth.png}
+    \end{center}
 
     \caption{ROC AUC metrics for different tree depths}
     \label{fig:roc-depths}
